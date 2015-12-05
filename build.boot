@@ -32,9 +32,10 @@
   [p prod bool "Run in production mode"]
   (comp (serve :httpkit true
                :reload  true
+               :nrepl   {:port 3001}
                :handler 'attn.api/handler)
         (if prod identity (watch))
-        (if prod identity (repl :server true))
+        ;; (if prod identity (repl :server true))
         ;; (if prod identity (cljs-repl))
         (if prod identity (reload))
         (build)
