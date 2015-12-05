@@ -51,8 +51,7 @@
 
 (defn get-tweets [access-token]
   (let [api-uri "https://api.twitter.com/1.1/statuses/home_timeline.json"
-        acc-tkn (first (vals @access-tokens)) ;; XXX
-                 #_(get @access-tokens access-token)
+        acc-tkn (get @access-tokens access-token)
         params  (oauth/credentials consumer
                                    (:oauth_token acc-tkn)
                                    (:oauth_token_secret acc-tkn)
@@ -76,10 +75,10 @@
         (fn [req]
           (let [verifier (get-in req [:params "oauth_verifier"])
                 tkn      (get-in req [:params "oauth_token"])
-                acc-tkn  (oauth/access-token consumer (get-req-token tkn) verifier)]
-            (swap! access-tokens assoc (:oauth_token acc-tkn) acc-tkn)
-            (r/redirect (str "/app?oauth-token=" tkn))
-            {:status 200 :body "Good Job!" :headers {"Content-Type" "text/plain"}}))
+                acc-map  (oauth/access-token consumer (get-req-token tkn) verifier)
+                access-token (:oauth_token acc-map)]
+            (swap! access-tokens assoc access-token acc-map)
+            (r/redirect (str "/?oauth-token=" access-token))))
         [""] (bring/->Resources {:prefix "public/"})}])
 
 (def handler
