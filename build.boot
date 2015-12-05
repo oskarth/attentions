@@ -1,13 +1,14 @@
 (set-env!
- :source-paths    #{"sass" "src-cljs"}
+ :source-paths    #{"sass" "src-cljs" "src-clj"}
  :resource-paths  #{"resources"}
  :dependencies '[[adzerk/boot-cljs          "1.7.48-6"   :scope "test"]
                  [adzerk/boot-cljs-repl     "0.2.0"      :scope "test"]
                  [adzerk/boot-reload        "0.4.1"      :scope "test"]
-                 [pandeiro/boot-http        "0.6.3"      :scope "test"]
+                 [pandeiro/boot-http        "0.7.1-SNAPSHOT" :scope "test"]
                  [deraen/boot-sass          "0.1.1"      :scope "test"]
                  [org.clojure/clojurescript "1.7.122"]
-                 [reagent "0.5.0"]])
+                 [reagent "0.5.0"]
+                 [bidi "1.21.1"]])
 
 (require
  '[adzerk.boot-cljs      :refer [cljs]]
@@ -22,7 +23,9 @@
         (sass :output-dir "css")))
 
 (deftask run []
-  (comp (serve)
+  (comp (serve :httpkit true
+               :reload  true
+               :handler 'attn.api/handler)
         (watch)
         (cljs-repl)
         (reload)
