@@ -29,7 +29,9 @@
 ;; we need the token and the token secret for /auth as well as for
 ;; the callback route because of that we need to save it somewhere
 
-(def access-tokens (atom {}))
+(def access-tokens
+  "Map from access token to access token map. Note that the key called oauth_token refers to the access token."
+  (atom {}))
 
 (def req-tokens (atom {}))
 
@@ -47,9 +49,10 @@
 (defn sign-in-url []
   (oauth/user-approval-uri consumer (:oauth_token (get-req-token))))
 
-(defn get-tweets [screen-name]
+(defn get-tweets [access-token]
   (let [api-uri "https://api.twitter.com/1.1/statuses/home_timeline.json"
-        acc-tkn (get @access-tokens screen-name)
+        acc-tkn (first (vals @access-tokens)) ;; XXX
+                 #_(get @access-tokens access-token)
         params  (oauth/credentials consumer
                                    (:oauth_token acc-tkn)
                                    (:oauth_token_secret acc-tkn)
@@ -63,8 +66,8 @@
 
         "index.html" (fn [req] {:status 200 :body "ex"})
 
-        ["feeds/" :screen-name ".json"]
-        (fn [req] {:status 200 :body (get-tweets (-> req :route-params :screen-name))})
+        ["feeds/" :access-token ".json"]
+        (fn [req] {:status 200 :body (get-tweets (-> req :route-params :access-token))})
 
         ;; OAuth Flow
         "auth"
@@ -74,7 +77,7 @@
           (let [verifier (get-in req [:params "oauth_verifier"])
                 tkn      (get-in req [:params "oauth_token"])
                 acc-tkn  (oauth/access-token consumer (get-req-token tkn) verifier)]
-            (swap! access-tokens assoc (:screen_name acc-tkn) acc-tkn)
+            (swap! access-tokens assoc (:oauth_token acc-tkn) acc-tkn)
             (r/redirect (str "/app?oauth-token=" tkn))
             {:status 200 :body "Good Job!" :headers {"Content-Type" "text/plain"}}))
         [""] (bring/->Resources {:prefix "public/"})}])
