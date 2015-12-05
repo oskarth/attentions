@@ -23,7 +23,6 @@
          ["articles/" :id "/article.html"] (fn [req] {:status 200 :body "Article"})
          "oauth_callback" (fn [req] (clojure.pprint/pprint req) (:status 200 :body req))}]))
 
-
 (do
   (println "So far all good")
   (def consumer (new-consumer))

@@ -27,12 +27,13 @@
 (deftask run
   [p prod bool "Run in production mode"]
   (comp (serve :httpkit true
-            :handler 'attn.api/handler)
-     (if prod identity (watch))
-     (if prod identity (cljs-repl))
-     (if prod identity (reload))
-     #_(build) ;; only needed as soon as we have cljs frontend
-     (if prod (wait) identity)))
+               :reload  true
+               :handler 'attn.api/handler)
+        (if prod identity (watch))
+        (if prod identity (cljs-repl))
+        (if prod identity (reload))
+        #_(build) ;; only needed as soon as we have cljs frontend
+        (if prod (wait) identity)))
 
 (deftask production []
   (task-options! cljs {:optimizations :advanced}
