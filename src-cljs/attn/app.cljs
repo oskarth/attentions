@@ -25,9 +25,9 @@
  :startup
  rf/debug
  (fn [db [_ v]]
-   (when (:access-token v)
+   (when (and (:access-token v) (not (seq (:tweets db))))
      (rf/dispatch [:get-tweets]))
-   (merge db v)))
+   (merge v db)))
 
 (rf/register-handler
  :tweets
