@@ -4,7 +4,8 @@
             [ring.middleware.params :as mp]
             [bidi.ring :as bring]
             [clj-http.client :as http]
-            [oauth.client :as oauth]))
+            [oauth.client :as oauth]
+            [clojure.data.json :as json]))
 
 (def secrets (read-string (slurp (io/resource "secrets.edn"))))
 
@@ -56,7 +57,7 @@
                                    (:oauth_token acc-tkn)
                                    (:oauth_token_secret acc-tkn)
                                    :GET api-uri)]
-    (http/get api-uri {:query-params params})))
+    (json/read-str (:body (http/get api-uri {:query-params params})) :key-fn keyword)))
 
 (def app-routes
   ["/" {"" (fn [req] {:status 200
@@ -66,7 +67,9 @@
         "index.html" (fn [req] {:status 200 :body "ex"})
 
         ["feeds/" :access-token ".json"]
-        (fn [req] {:status 200 :body (get-tweets (-> req :route-params :access-token))})
+        (fn [req]
+          {:status 200
+           :body (get-tweets (-> req :route-params :access-token))})
 
         ;; OAuth Flow
         "auth"
@@ -78,7 +81,7 @@
                 acc-map  (oauth/access-token consumer (get-req-token tkn) verifier)
                 access-token (:oauth_token acc-map)]
             (swap! access-tokens assoc access-token acc-map)
-            (r/redirect (str "/?oauth-token=" access-token))))
+            (r/redirect (str "/?access-token=" access-token))))
         [""] (bring/->Resources {:prefix "public/"})}])
 
 (def handler

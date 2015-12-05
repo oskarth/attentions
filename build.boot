@@ -13,15 +13,15 @@
                  ;; server
                  [bidi "1.22.1"]
                  [clj-http "2.0.0"]
-                 [clj-oauth "1.5.3"]])
+                 [clj-oauth "1.5.3"]
+                 [org.clojure/data.json "0.2.6"]])
 
 (require
  '[adzerk.boot-cljs      :refer [cljs]]
  '[adzerk.boot-cljs-repl :refer [cljs-repl start-repl]]
  '[adzerk.boot-reload    :refer [reload]]
  '[pandeiro.boot-http    :refer [serve]]
- '[deraen.boot-sass      :refer [sass]]
- '[oauth.client          :as oauth])
+ '[deraen.boot-sass      :refer [sass]])
 
 (deftask build []
   (comp (speak)
