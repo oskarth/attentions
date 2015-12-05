@@ -31,7 +31,7 @@
      (if prod identity (watch))
      (if prod identity (cljs-repl))
      (if prod identity (reload))
-     (build)
+     #_(build) ;; only needed as soon as we have cljs frontend
      (if prod (wait) identity)))
 
 (deftask production []
