@@ -32,7 +32,7 @@
  rf/debug
  (fn [db [_ tweets]]
    (trace (count tweets))
-   (assoc db :tweets tweets)))
+   (update db :tweets #(reduce conj % tweets))))
 
 (rf/register-handler
  :get-tweets
@@ -65,7 +65,8 @@
 
 (defn get-startup-data []
   (let [qd (.getQueryData (uri/parse js/location))]
-    {:access-token (.get qd "access-token")}))
+    {:access-token (.get qd "access-token")
+     :tweets       #{}}))
 
 (defn init []
   (rf/dispatch-sync [:startup (get-startup-data)])
