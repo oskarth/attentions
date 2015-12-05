@@ -26,7 +26,7 @@
 (deftask build []
   (comp (speak)
      (cljs)
-     #_(sass :output-dir "public/css")))
+     (sass)))
 
 (deftask run
   [p prod bool "Run in production mode"]
