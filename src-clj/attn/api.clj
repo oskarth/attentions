@@ -5,7 +5,8 @@
             [bidi.ring :as bring]
             [clj-http.client :as http]
             [oauth.client :as oauth]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [camel-snake-kebab.core :as case]))
 
 (def secrets (read-string (slurp (io/resource "secrets.edn"))))
 
@@ -24,14 +25,9 @@
                        "https://api.twitter.com/oauth/authorize"
                        :hmac-sha1))
 
-;; (defn new-request-token [consumer]
-;;   (oauth/request-token consumer oauth_callback_uri))
-
-;; we need the token and the token secret for /auth as well as for
-;; the callback route because of that we need to save it somewhere
-
 (defonce access-tokens
-  ^{:doc "Map from access token to access token map. Note that the key called oauth_token refers to the access token."}
+  ^{:doc "Map from access token to access token map.
+Note that the key called oauth_token refers to the access token."}
   (atom {}))
 
 (defonce req-tokens (atom {}))
@@ -59,7 +55,7 @@
                                    (:oauth_token_secret acc-tkn)
                                    :GET api-uri api-params)]
     (-> (http/get api-uri {:query-params (merge params api-params)})
-        :body (json/read-str :key-fn keyword))))
+        :body (json/read-str :key-fn case/->kebab-case-keyword))))
 
 (def app-routes
   ["/" {"" (fn [req] {:status 200
