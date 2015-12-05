@@ -16,19 +16,19 @@
    (merge db v)))
 
 (rf/register-sub
- :oauth-token
+ :access-token
  (fn [db [k]]
    (reaction (get @db k))))
 
 (defn app []
-  (let [tkn (rf/subscribe [:oauth-token])]
-    (if @tkn
-      [:div "Check out your " [:a {:href (str "/feeds/" @tkn ".json")} "feed"] "."]
+  (let [acc-tkn (rf/subscribe [:access-token])]
+    (if @acc-tkn
+      [:div "Check out your " [:a {:href (str "/feeds/" @acc-tkn ".json")} "feed"] "."]
       [:div [:a.btn.bg-green.rounded {:href "/auth"} "sign in"]])))
 
 (defn get-startup-data []
   (let [qd (.getQueryData (uri/parse js/location))]
-    {:oauth-token (.get qd "oauth-token")}))
+    {:access-token (.get qd "access-token")}))
 
 (defn init []
   (rf/dispatch-sync [:startup (get-startup-data)])
