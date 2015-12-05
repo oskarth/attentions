@@ -26,16 +26,16 @@
 (deftask build []
   (comp (speak)
      (cljs)
-     #_(sass :output-dir "public/css")))
+     (sass)))
 
 (deftask run
   [p prod bool "Run in production mode"]
   (comp (serve :httpkit true
                :reload  true
                :handler 'attn.api/handler)
-        (if prod identity (watch))
         (if prod identity (cljs-repl))
         (if prod identity (reload))
+        (if prod identity (watch))
         (build)
         (if prod (wait) identity)))
 

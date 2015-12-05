@@ -30,7 +30,8 @@
       [:div [:button {:on-click goto-auth!} "sign in"]])))
 
 (defn get-startup-data []
-  {:oauth-token (.get (.getQueryData (uri/parse js/location)) "oauth-token")})
+  (let [qd (.getQueryData (uri/parse js/location))]
+    {:oauth-token (.get qd "oauth-token")}))
 
 (defn init []
   (rf/dispatch-sync [:startup (get-startup-data)])
