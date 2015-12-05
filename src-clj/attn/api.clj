@@ -52,12 +52,14 @@
 
 (defn get-tweets [access-token]
   (let [api-uri "https://api.twitter.com/1.1/statuses/home_timeline.json"
+        api-params {:count 200}
         acc-tkn (get @access-tokens access-token)
         params  (oauth/credentials consumer
                                    (:oauth_token acc-tkn)
                                    (:oauth_token_secret acc-tkn)
-                                   :GET api-uri)]
-    (json/read-str (:body (http/get api-uri {:query-params params})) :key-fn keyword)))
+                                   :GET api-uri api-params)]
+    (-> (http/get api-uri {:query-params (merge params api-params)})
+        :body (json/read-str :key-fn keyword))))
 
 (def app-routes
   ["/" {"" (fn [req] {:status 200
@@ -69,7 +71,7 @@
         ["feeds/" :access-token ".edn"]
         (fn [req]
           {:status 200
-           :body (get-tweets (-> req :route-params :access-token))})
+           :body (pr-str (get-tweets (-> req :route-params :access-token)))})
 
         ;; OAuth Flow
         "auth"
