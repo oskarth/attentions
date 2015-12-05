@@ -1,18 +1,34 @@
 (ns attn.app
-  (:require [reagent.core :as reagent :refer [atom]]))
+  (:require-macros [reagent.ratom :refer [reaction]])
+  (:require [reagent.core :as reagent]
+            [re-frame.core :as rf]
+            [goog.dom :as dom]
+            [goog.Uri :as uri]))
 
-(defn some-component []
-  [:div
-   [:h3 "I am a component!"]
-   [:p.someclass
-    "I have " [:strong "bold"]
-    [:span {:style {:color "red"}} " and red"]
-    " text."]])
+(defn trace [x]
+  (js/console.log (pr-str x))
+  x)
 
-(defn calling-component []
-  [:div "Parent component"
-   [some-component]])
+(rf/register-handler
+ :startup
+ rf/debug
+ (fn [db [_ v]]
+   (merge db v)))
+
+(rf/register-sub
+ :oauth-token
+ (fn [db [k]]
+   (reaction (get @db k))))
+
+(defn app []
+  (let [tkn (rf/subscribe [:oauth-token])]
+    (if @tkn
+      [:div "signed in with token: " @tkn]
+      [:div [:button "sign in"]])))
+
+(defn get-startup-data []
+  {:oauth-token (.get (.getQueryData (uri/parse js/location)) "oauth-token")})
 
 (defn init []
-  (reagent/render-component [calling-component]
-                            (.getElementById js/document "container")))
+  (rf/dispatch-sync [:startup (get-startup-data)])
+  (reagent/render-component [app] (dom/getElement "container")))

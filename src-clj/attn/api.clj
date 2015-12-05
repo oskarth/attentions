@@ -57,8 +57,12 @@
     (http/get api-uri {:query-params params})))
 
 (def app-routes
-  ["/" {"" (fn [_] {:status 200 :body "Hello World!" :headers {"Content-Type" "text/plain"}})
+  ["/" {"" (fn [req] {:status 200
+                      :body (slurp (io/resource "index.html"))
+                      :headers {"Content-Type" "text/html"}})
+
         "index.html" (fn [req] {:status 200 :body "ex"})
+
         ["feeds/" :screen-name ".json"]
         (fn [req] {:status 200 :body (get-tweets (-> req :route-params :screen-name))})
 
@@ -71,7 +75,9 @@
                 tkn      (get-in req [:params "oauth_token"])
                 acc-tkn  (oauth/access-token consumer (get-req-token tkn) verifier)]
             (swap! access-tokens assoc (:screen_name acc-tkn) acc-tkn)
-            {:status 200 :body "Good Job!" :headers {"Content-Type" "text/plain"}}))}])
+            (r/redirect (str "/app?oauth-token=" tkn))
+            {:status 200 :body "Good Job!" :headers {"Content-Type" "text/plain"}}))
+        [""] (bring/->Resources {:prefix "public/"})}])
 
 (def handler
   (-> app-routes bring/make-handler mp/wrap-params))
