@@ -31,6 +31,7 @@
  :tweets
  rf/debug
  (fn [db [_ tweets]]
+   (trace (count tweets))
    (assoc db :tweets tweets)))
 
 (rf/register-handler
@@ -46,10 +47,19 @@
  (fn [db [k]]
    (reaction (get @db k))))
 
+(rf/register-sub
+ :tweets
+ (fn [db [k]]
+   (reaction (get @db k))))
+
 (defn app []
-  (let [acc-tkn (rf/subscribe [:access-token])]
+  (let [acc-tkn (rf/subscribe [:access-token])
+        tweets (rf/subscribe [:tweets])]
     (if @acc-tkn
       [:div "Check out your "
+       (when (seq @tweets)
+         [:p "count " (str (:tweets @tweets))])
+
        [:a {:on-click #(rf/dispatch [:get-tweets])} "feed"] "."]
       [:div [:a.btn.bg-green.rounded {:href "/auth"} "sign in"]])))
 
