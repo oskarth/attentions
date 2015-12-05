@@ -29,11 +29,11 @@
 ;; we need the token and the token secret for /auth as well as for
 ;; the callback route because of that we need to save it somewhere
 
-(def access-tokens
+(defonce access-tokens
   "Map from access token to access token map. Note that the key called oauth_token refers to the access token."
   (atom {}))
 
-(def req-tokens (atom {}))
+(defonce req-tokens (atom {}))
 
 (defn get-req-token
   "Get us a new token or return an existing one"
