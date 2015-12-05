@@ -12,6 +12,7 @@
                  [re-frame "0.5.0"]
                  ;; server
                  [bidi "1.22.1"]
+                 [camel-snake-kebab "0.3.2"]
                  [clj-http "2.0.0"]
                  [clj-oauth "1.5.3"]
                  [org.clojure/data.json "0.2.6"]])

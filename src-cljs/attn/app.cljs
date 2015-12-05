@@ -52,18 +52,35 @@
 (rf/register-sub
  :tweets
  (fn [db [k]]
-   (reaction (get @db k))))
+   (reaction (reverse (sort-by :id (get @db k))))))
+
+
+
+(defn tweet [tweet]
+  (let [rt-or-t  (or (:retweeted-status tweet) tweet)
+        entities (:entities tweet)]
+    ;; (trace tweet)
+    [:div.flex.flex-center.p2
+     [:div.mr2.p0
+      [:img.rounded {:src (-> rt-or-t :user :profile-image-url)
+                     :style {:width "48px" :height "48px"}}]]
+     [:span (:text rt-or-t)]
+     (when (:retweeted-status tweet)
+       [:span.ml3.bold.gray "RT"])]))
 
 (defn app []
   (let [acc-tkn (rf/subscribe [:access-token])
         tweets (rf/subscribe [:tweets])]
-    (if @acc-tkn
-      [:div "Check out your "
-       (when (seq @tweets)
-         [:p "count " (str (:tweets @tweets))])
-
-       [:a {:on-click #(rf/dispatch [:get-tweets])} "feed"] "."]
-      [:div [:a.btn.bg-green.rounded {:href "/auth"} "sign in"]])))
+      [:div.container.mt4
+       [:div#timeline.col-10.mx-auto
+        [:h1 "Attentions"]
+        (if @acc-tkn
+          [:div
+           [:p "Check out your " [:a {:on-click #(rf/dispatch [:get-tweets])} "feed"] "."]
+           (for [t @tweets]
+             ^{:key (:id t)}
+             [tweet t])]
+          [:div [:a.btn.bg-green.white.rounded {:href "/auth"} "Sign in with Twitter"]])]]))
 
 (defn get-startup-data []
   (let [qd (.getQueryData (uri/parse js/location))]
