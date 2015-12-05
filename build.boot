@@ -34,6 +34,7 @@
                :reload  true
                :handler 'attn.api/handler)
         (if prod identity (watch))
+        (if prod identity (repl :server true))
         ;; (if prod identity (cljs-repl))
         (if prod identity (reload))
         (build)
