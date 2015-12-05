@@ -8,10 +8,10 @@
 
 (def secrets (read-string (slurp (io/resource "secrets.edn"))))
 
-(defn oauth-callback-uri [dev?]
-  (if dev?
-    "http://127.0.0.1:3000/oauth_callback"
-    "http://attentions.oskarth.com/oauth_callback"))
+(defn oauth-callback-uri []
+  (if (System/getenv "ATTN_PROD")
+    "http://attentions.oskarth.com/oauth_callback"
+    "http://127.0.0.1:3000/oauth_callback"))
 
 (def consumer
   (oauth/make-consumer (:consumer-key secrets)
