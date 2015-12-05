@@ -37,7 +37,7 @@
  :get-tweets
  rf/debug
  (fn [db _]
-   (edn-xhr (str "/feeds/" (:access-token db) ".json")
+   (edn-xhr (str "/feeds/" (:access-token db) ".edn")
             #(rf/dispatch [:tweets %]))
    db))
 

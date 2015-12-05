@@ -66,7 +66,7 @@
 
         "index.html" (fn [req] {:status 200 :body "ex"})
 
-        ["feeds/" :access-token ".json"]
+        ["feeds/" :access-token ".edn"]
         (fn [req]
           {:status 200
            :body (get-tweets (-> req :route-params :access-token))})
