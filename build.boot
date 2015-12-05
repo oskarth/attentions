@@ -8,32 +8,36 @@
                  [deraen/boot-sass          "0.1.1"      :scope "test"]
                  [org.clojure/clojurescript "1.7.122"]
                  [reagent "0.5.0"]
-                 [bidi "1.21.1"]])
+                 [bidi "1.21.1"]
+                 [clj-oauth "1.5.3"]])
 
 (require
  '[adzerk.boot-cljs      :refer [cljs]]
  '[adzerk.boot-cljs-repl :refer [cljs-repl start-repl]]
  '[adzerk.boot-reload    :refer [reload]]
  '[pandeiro.boot-http    :refer [serve]]
- '[deraen.boot-sass      :refer [sass]])
+ '[deraen.boot-sass      :refer [sass]]
+ '[oauth.client          :as oauth])
 
 (deftask build []
   (comp (speak)
-        (cljs)
-        (sass :output-dir "css")))
+     (cljs)
+     #_(sass :output-dir "css")))
 
-(deftask run []
+(deftask run
+  [p prod bool "Run in production mode"]
   (comp (serve :httpkit true
-               :reload  true
-               :handler 'attn.api/handler)
-        (watch)
-        (cljs-repl)
-        (reload)
-        (build)))
+            :handler 'attn.api/handler)
+     (if prod identity (watch))
+     (if prod identity (cljs-repl))
+     (if prod identity (reload))
+     (build)
+     (if prod (wait) identity)))
 
 (deftask production []
   (task-options! cljs {:optimizations :advanced}
-                 sass {:output-style "compressed"})
+                 ;;sass {:output-style :compressed}
+                 serve {:port 8080})
   identity)
 
 (deftask development []
@@ -48,4 +52,4 @@
   "Simple alias to run application in development mode"
   []
   (comp (development)
-        (run)))
+     (run)))
