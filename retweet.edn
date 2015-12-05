@@ -1,0 +1,81 @@
+{:retweet-count 1, :in-reply-to-user-id nil, :coordinates nil,
+:in-reply-to-user-id-str nil, :place nil, :geo nil, :entities {:urls
+[], :user-mentions [{:name "borkdude", :id-str "15446348",
+:screen-name "borkdude", :id 15446348, :indices [3 12]} {:name
+"Cursive", :id-str "1731795337", :screen-name "CursiveClojure", :id
+1731795337, :indices [40 55]}], :hashtags [{:indices [105 113], :text
+"clojure"}], :symbols []}, :id-str "673224213705068544",
+:in-reply-to-status-id nil, :source "<a
+href=\"https://about.twitter.com/products/tweetdeck\"
+rel=\"nofollow\">TweetDeck</a>", :lang "en", :id 673224213705068500,
+:contributors nil, :truncated false, :retweeted false,
+:in-reply-to-screen-name nil, :is-quote-status false,
+:in-reply-to-status-id-str nil, :favorited false, :created-at "Sat Dec
+05 19:35:35 +0000 2015", :user {:description "Cursive is the Clojure
+IDE that understands your code.", :default-profile-image false,
+:follow-request-sent false, :friends-count 74,
+:profile-background-image-url
+"http://abs.twimg.com/images/themes/theme1/bg.png", :is-translator
+false, :utc-offset 46800, :name "Cursive", :profile-sidebar-fill-color
+"DDEEF6", :profile-sidebar-border-color "C0DEED", :statuses-count
+2453, :entities {:description {:urls []}, :url {:urls [{:display-url
+"cursiveclojure.com", :expanded-url "http://cursiveclojure.com", :url
+"http://t.co/XhuyJUIWfs", :indices [0 22]}]}}, :id-str "1731795337",
+:following true, :profile-background-color "C0DEED", :lang "en",
+:profile-background-image-url-https
+"https://abs.twimg.com/images/themes/theme1/bg.png", :followers-count
+2105, :profile-background-tile false, :notifications false,
+:is-translation-enabled false, :screen-name "CursiveClojure", :id
+1731795337, :url "http://t.co/XhuyJUIWfs",
+:profile-use-background-image true, :protected false, :listed-count
+93, :profile-link-color "0084B4", :geo-enabled false,
+:has-extended-profile false, :favourites-count 3, :created-at "Thu Sep
+05 12:15:35 +0000 2013", :location "", :profile-image-url-https
+"https://pbs.twimg.com/profile_images/665118668611719168/y1epDHdH_normal.png",
+:contributors-enabled false, :profile-image-url
+"http://pbs.twimg.com/profile_images/665118668611719168/y1epDHdH_normal.png",
+:profile-text-color "333333", :default-profile true, :verified false,
+:time-zone "Wellington"}, :retweeted-status {:retweet-count 1,
+:in-reply-to-user-id nil, :coordinates nil, :in-reply-to-user-id-str
+nil, :place nil, :geo nil, :entities {:urls [], :user-mentions [{:name
+"Cursive", :id-str "1731795337", :screen-name "CursiveClojure", :id
+1731795337, :indices [26 41]}], :hashtags [{:indices [91 99], :text
+"clojure"}], :symbols []}, :id-str "673147506499407873",
+:in-reply-to-status-id nil, :source "<a
+href=\"http://twitter.com/download/android\" rel=\"nofollow\">Twitter
+for Android</a>", :lang "en", :id 673147506499407900, :contributors
+nil, :truncated false, :retweeted false, :in-reply-to-screen-name nil,
+:is-quote-status false, :in-reply-to-status-id-str nil, :favorited
+false, :created-at "Sat Dec 05 14:30:46 +0000 2015", :user
+{:description "Clojure programmer * FP lover * Haskell watcher * whole
+foods plant based * vegan * progressive metal * ♥ @lalage_.",
+:default-profile-image false, :follow-request-sent false,
+:friends-count 200, :profile-background-image-url
+"http://pbs.twimg.com/profile_background_images/55298632/twilk_background.jpg",
+:is-translator false, :utc-offset 3600, :name "borkdude",
+:profile-sidebar-fill-color "E0FF92", :profile-sidebar-border-color
+"87BC44", :statuses-count 71155, :entities {:description {:urls []},
+:url {:urls [{:display-url "michielborkent.nl", :expanded-url
+"http://www.michielborkent.nl", :url "https://t.co/dPXhkHzEWV",
+:indices [0 23]}]}}, :id-str "15446348", :following false,
+:profile-background-color "9AE4E8", :lang "en",
+:profile-background-image-url-https
+"https://pbs.twimg.com/profile_background_images/55298632/twilk_background.jpg",
+:followers-count 1331, :profile-background-tile false, :notifications
+false, :is-translation-enabled false, :screen-name "borkdude", :id
+15446348, :url "https://t.co/dPXhkHzEWV",
+:profile-use-background-image false, :protected false, :listed-count
+97, :profile-link-color "0000FF", :geo-enabled true,
+:has-extended-profile false, :favourites-count 555, :created-at "Tue
+Jul 15 21:30:06 +0000 2008", :location "Amersfoort",
+:profile-image-url-https
+"https://pbs.twimg.com/profile_images/652195120507318272/RB8k3Z92_normal.jpg",
+:contributors-enabled false, :profile-image-url
+"http://pbs.twimg.com/profile_images/652195120507318272/RB8k3Z92_normal.jpg",
+:profile-text-color "000000", :default-profile false, :verified false,
+:time-zone "Amsterdam"}, :favorite-count 0, :text "This is what I like
+about @CursiveClojure , refactorings works independently from the REPL
+#clojure"},
+ :favorite-count 0, :text "RT @borkdude: This is what I
+like about @CursiveClojure , refactorings works independently from the
+REPL #clojure"}
