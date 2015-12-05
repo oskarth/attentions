@@ -1,6 +1,7 @@
 /target
 /classes
 /checkouts
+/resources/secrets.edn
 pom.xml
 pom.xml.asc
 *.jar
