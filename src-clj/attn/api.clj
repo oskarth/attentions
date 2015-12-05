@@ -59,8 +59,8 @@
 (def app-routes
   ["/" {"" (fn [_] {:status 200 :body "Hello World!" :headers {"Content-Type" "text/plain"}})
         "index.html" (fn [req] {:status 200 :body "ex"})
-        "feed"       (fn [req] {:status 200 :body (get-tweets "martinklepsch") :headers {"Content-Type" "text/json"} })
-        ;; ["articles/" :id "/article.html"] (fn [req] {:status 200 :body "Article"})
+        ["feeds/" :screen-name ".json"]
+        (fn [req] {:status 200 :body (get-tweets (-> req :route-params :screen-name))})
 
         ;; OAuth Flow
         "auth"
