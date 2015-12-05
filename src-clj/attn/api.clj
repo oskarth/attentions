@@ -30,7 +30,7 @@
 ;; the callback route because of that we need to save it somewhere
 
 (defonce access-tokens
-  "Map from access token to access token map. Note that the key called oauth_token refers to the access token."
+  ^{:doc "Map from access token to access token map. Note that the key called oauth_token refers to the access token."}
   (atom {}))
 
 (defonce req-tokens (atom {}))
