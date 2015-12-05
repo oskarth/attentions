@@ -23,7 +23,7 @@
 (defn app []
   (let [tkn (rf/subscribe [:oauth-token])]
     (if @tkn
-      [:div "signed in with token: " @tkn]
+      [:div "Check out your " [:a {:href (str "/feeds/" @tkn ".json")} "feed"] "."]
       [:div [:a.btn.bg-green.rounded {:href "/auth"} "sign in"]])))
 
 (defn get-startup-data []
