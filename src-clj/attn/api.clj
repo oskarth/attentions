@@ -43,11 +43,7 @@
    (get @req-tokens oauth-token)))
 
 (defn sign-in-url []
-  (println "Getting request token")
-  (let [tkn (get-req-token)
-        uri (oauth/user-approval-uri consumer (:oauth_token tkn))]
-    (println "URI generated")
-    uri))
+  (oauth/user-approval-uri consumer (:oauth_token (get-req-token))))
 
 (defn get-tweets [screen-name]
   (let [api-uri "https://api.twitter.com/1.1/statuses/home_timeline.json"
