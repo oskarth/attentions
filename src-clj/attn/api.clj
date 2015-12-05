@@ -35,7 +35,7 @@
   "Get us a new token or return an existing one"
   ([]
    (println "Getting a fresh request-token")
-   (let [tkn (oauth/request-token consumer (oauth-callback-uri true))]
+   (let [tkn (oauth/request-token consumer (oauth-callback-uri))]
      (swap! req-tokens assoc (:oauth_token tkn) tkn)
      (println "Request token retrieved:\n" tkn)
      tkn))
