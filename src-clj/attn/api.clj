@@ -46,17 +46,17 @@
     (println "URI generated")
     uri))
 
-(def app-handler
-  (bring/make-handler
-   ["/" {"" (fn [_] {:status 200 :body "Hello World!" :headers {"Content-Type" "text/plain"}})
-         "index.html" (fn [req] {:status 200 :body "ex"})
-         ;; ["articles/" :id "/article.html"] (fn [req] {:status 200 :body "Article"})
-         ;; OAuth Flow
-         "auth" (fn [req] (r/redirect (sign-in-url)))
-         "oauth_callback" (fn [req]
-                            (let [verifier (get-in req [:params "oauth_verifier"])
-                                  tkn      (get-in req [:params "oauth_token"])
-                                  access-token (oauth/access-token consumer (get-token tkn) verifier)]
-                              {:status 200 :body req :headers {"Content-Type" "text/plain"}}))}]))
+(def app-routes
+  ["/" {"" (fn [_] {:status 200 :body "Hello World!" :headers {"Content-Type" "text/plain"}})
+        "index.html" (fn [req] {:status 200 :body "ex"})
+        ;; ["articles/" :id "/article.html"] (fn [req] {:status 200 :body "Article"})
+        ;; OAuth Flow
+        "auth" (fn [req] (r/redirect (sign-in-url)))
+        "oauth_callback" (fn [req]
+                           (let [verifier (get-in req [:params "oauth_verifier"])
+                                 tkn      (get-in req [:params "oauth_token"])
+                                 access-token (oauth/access-token consumer (get-token tkn) verifier)]
+                             {:status 200 :body req :headers {"Content-Type" "text/plain"}}))}])
 
-(def handler (-> app-handler mp/wrap-params))
+(def handler
+  (-> app-routes bring/make-handler mp/wrap-params))
