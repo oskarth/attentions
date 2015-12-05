@@ -44,7 +44,7 @@
 
 (defn sign-in-url []
   (println "Getting request token")
-  (let [tkn (get-token)
+  (let [tkn (get-req-token)
         uri (oauth/user-approval-uri consumer (:oauth_token tkn))]
     (println "URI generated")
     uri))
@@ -71,7 +71,7 @@
         (fn [req]
           (let [verifier (get-in req [:params "oauth_verifier"])
                 tkn      (get-in req [:params "oauth_token"])
-                acc-tkn  (oauth/access-token consumer (get-token tkn) verifier)]
+                acc-tkn  (oauth/access-token consumer (get-req-token tkn) verifier)]
             (swap! access-tokens assoc (:screen_name acc-tkn) acc-tkn)
             {:status 200 :body "Good Job!" :headers {"Content-Type" "text/plain"}}))}])
 
