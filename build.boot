@@ -8,7 +8,9 @@
                  [deraen/boot-sass          "0.1.1"      :scope "test"]
                  [org.clojure/clojurescript "1.7.122"]
                  [reagent "0.5.0"]
+                 ;; server
                  [bidi "1.21.1"]
+                 [clj-http "2.0.0"]
                  [clj-oauth "1.5.3"]])
 
 (require
