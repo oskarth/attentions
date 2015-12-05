@@ -33,9 +33,9 @@
   (comp (serve :httpkit true
                :reload  true
                :handler 'attn.api/handler)
-        (if prod identity (cljs-repl))
-        (if prod identity (reload))
         (if prod identity (watch))
+        ;; (if prod identity (cljs-repl))
+        (if prod identity (reload))
         (build)
         (if prod (wait) identity)))
 

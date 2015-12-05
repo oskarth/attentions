@@ -20,14 +20,11 @@
  (fn [db [k]]
    (reaction (get @db k))))
 
-(defn goto-auth! []
-  (set! (-> js/window .-location .-href) "/auth"))
-
 (defn app []
   (let [tkn (rf/subscribe [:oauth-token])]
     (if @tkn
       [:div "signed in with token: " @tkn]
-      [:div [:button {:on-click goto-auth!} "sign in"]])))
+      [:div [:a.btn.bg-green.rounded {:href "/auth"} "sign in"]])))
 
 (defn get-startup-data []
   (let [qd (.getQueryData (uri/parse js/location))]
