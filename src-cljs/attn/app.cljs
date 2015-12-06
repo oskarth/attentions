@@ -61,9 +61,9 @@
          new (reduce #(assoc %1 (:id %2) %2) old tweets)]
      ;; (println "arg type" (type tweets))
      ;; (println "db type" (type old))
-     (ls/set! :tweets (let [new-val new]
-                        (println (count new-val) "items in localstorage")
-                        (into {} (take 300 new-val))))
+     (ls/set! :tweets (do
+                        (println (count new) "items in localstorage")
+                        (into {} (take 300 new))))
      (assoc db :tweets new))))
 
 (rf/register-handler
