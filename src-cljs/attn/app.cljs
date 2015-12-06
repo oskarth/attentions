@@ -34,7 +34,6 @@
 (rf/register-handler
  :tweets
  (fn [db [_ tweets]]
-   (trace (count tweets))
    (update db :tweets #(reduce conj % tweets))))
 
 (rf/register-handler
@@ -60,6 +59,61 @@
     (println "NICK FREQ:" nicks-freq)
     (take 10 tweets)))
 
+(def entity-type-mapping
+  {:urls ::url, :user-mentions ::mention,
+   :hashtags ::hashtag, :symbols ::symbol
+   :media ::media})
+
+(defn get-entities [tweet]
+  (->> (for [[t es] (:entities tweet)]
+        (map #(assoc % :type (get entity-type-mapping t t)) es))
+       (apply concat)
+       (sort-by :indices)))
+
+(defn separate-at-indices [string idcs]
+  (let [indexed (map-indexed (fn [idx ch] [idx ch]) string)
+        ibs     (map first idcs)
+        in-idc? (fn [[ib ie] idx] (and (>= idx ib) (< idx ie)))
+        within-idcs? (fn [[idx _]] (some #(in-idc? % idx) idcs))]
+    (->> (remove
+          (fn [xs] (every? within-idcs? xs))
+          (partition-by within-idcs? indexed))
+         (map #(apply str (map second %))))))
+
+(defn fill [coll size]
+  (concat coll (repeat (- size (count coll)) nil)))
+
+(defn alternate
+  "Like interleave but make sure colls are fully exhausted.
+   If a coll is not long enough interleave with nils"
+  [c1 c2]
+  (let [cnt (max (count c1) (count c2))]
+    (interleave (fill c1 cnt) (fill c2 cnt))))
+
+(defn entity [ent]
+  (let [t "https://twitter.com/"]
+    (case (:type ent)
+      ::url     [:a {:href (:url ent)}
+                 (:display-url ent)]
+      ::media   [:a {:href (:url ent)}
+                 (:display-url ent)]
+      ::mention [:a {:href (str t (:screen-name ent))}
+                 (:screen-name ent)]
+      ::hashtag [:a {:href (str t "hashtag/" (:text ent))}
+                 (str "#" (:text ent))]
+      ::symbol  [:span "Uhm...?"]
+      [:span (pr-str ent)])))
+
+(defn tweet-text [tweet]
+  (let [txt  (:text tweet)
+        ents (get-entities tweet)
+        idcs (map :indices ents)
+        sepd (separate-at-indices txt idcs)]
+    (into [:span]
+          (if (= 0 (ffirst idcs))
+            (alternate (map entity ents) sepd)
+            (alternate sepd (map entity ents))))))
+
 (defn tweet [tweet]
   (let [rt-or-t  (or (:retweeted-status tweet) tweet)
         entities (:entities tweet)]
@@ -68,7 +122,7 @@
      [:div.mr2.p0
       [:img.rounded {:src (-> rt-or-t :user :profile-image-url)
                      :style {:width "48px" :height "48px"}}]]
-     [:span (:text rt-or-t)]
+     [tweet-text rt-or-t]
      (when (:retweeted-status tweet)
        [:span.ml3.bold.gray "RT"])]))
 
