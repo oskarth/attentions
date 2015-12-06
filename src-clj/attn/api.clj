@@ -46,16 +46,23 @@ Note that the key called oauth_token refers to the access token."}
 (defn sign-in-url []
   (oauth/user-approval-uri consumer (:oauth_token (get-req-token))))
 
-(defn get-tweets [access-token]
-  (let [api-uri "https://api.twitter.com/1.1/statuses/home_timeline.json"
-        api-params {:count 200}
-        acc-tkn (get @access-tokens access-token)
-        params  (oauth/credentials consumer
-                                   (:oauth_token acc-tkn)
-                                   (:oauth_token_secret acc-tkn)
+(defn twitter-api-req [api-uri acc-token api-params]
+  (let [params  (oauth/credentials consumer
+                                   (:oauth_token acc-token)
+                                   (:oauth_token_secret acc-token)
                                    :GET api-uri api-params)]
     (-> (http/get api-uri {:query-params (merge params api-params)})
         :body (json/read-str :key-fn case/->kebab-case-keyword))))
+
+(defn get-tweets [access-token]
+  (twitter-api-req "https://api.twitter.com/1.1/statuses/home_timeline.json"
+                   (get @access-tokens access-token)
+                   {:count 200}))
+
+(defn get-favs [access-token]
+  (twitter-api-req "https://api.twitter.com/1.1/favorites/list.json"
+                   (get @access-tokens access-token)
+                   {:count 200}))
 
 (def app-routes
   ["/" {"" (fn [req] {:status 200
@@ -68,6 +75,13 @@ Note that the key called oauth_token refers to the access token."}
         (fn [req]
           {:status 200
            :body (pr-str (get-tweets (-> req :route-params :access-token)))})
+
+        ["favstats/" :access-token ".edn"]
+        (fn [req]
+          {:status 200
+           :body (let [favs (get-favs (-> req :route-params :access-token))
+                       nicks (map #(-> % :user :screen-name) favs)]
+                   (pr-str (reduce #(update %1 %2 (fnil inc 0)) {} nicks)))})
 
         ;; OAuth Flow
         "auth"
