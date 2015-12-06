@@ -84,3 +84,6 @@ Note that the key called oauth_token refers to the access token."}
 
 (def handler
   (-> app-routes bring/make-handler mp/wrap-params))
+
+;; Workaround for auth bug, eval locally
+;; (oauth/request-token consumer "http://attentions.oskarth.com/oauth_callback")
