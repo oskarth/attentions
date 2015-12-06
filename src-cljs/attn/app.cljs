@@ -60,8 +60,8 @@
  (fn [db [_ tweets]]
    (let [old (or (:tweets db) {})
          new (reduce #(assoc-in %1 [:tweets (:id %2)] %2) old tweets)]
-     (println "arg type" (type tweets))
-     (println "db type" (type old))
+     ;;(println "arg type" (type tweets))
+     ;;(println "db type" (type old))
      (ls/set! :tweets (let [new-val (:tweets new)]
                         (println (count new-val) "items in localstorage")
                         (into {} (take 300 new-val))))
@@ -69,14 +69,14 @@
 
 (rf/register-handler
  :favstats
- rf/debug
+;; rf/debug
  (fn [db [_ stat-map]]
    (ls/update! :favstats merge stat-map)
    (update db :favstats merge stat-map)))
 
 (rf/register-handler
  :get-tweets
- rf/debug
+;; rf/debug
  (fn [db _]
    (edn-xhr (str "/feeds/" (:access-token db) ".edn")
             #(rf/dispatch [:tweets %])
@@ -85,7 +85,7 @@
 
 (rf/register-handler
  :get-favstats
- rf/debug
+;; rf/debug
  (fn [db _]
    (edn-xhr (str "/favstats/" (:access-token db) ".edn")
             #(rf/dispatch [:favstats %]))
@@ -93,7 +93,7 @@
 
 (rf/register-handler
  :toggle-hidden
- rf/debug
+;; rf/debug
  (fn [db _]
    (update db :show-hidden? not)))
 
@@ -122,10 +122,6 @@
           (sort-by :id)
           reverse
           reaction))))
-     ;; (reaction
-     ;;  (reverse
-     ;;   (sort-by :id (-> (fn [t] (assoc t ::selected (@selected? (:id t))))
-     ;;                    (mapv ))))))))
 
 (rf/register-sub
  :favstats
@@ -154,20 +150,12 @@
         (= kw :good)  0.5
         (= kw :great) 0.75))
 
-;;TODO: Factor out / remove the general factors.
-(defn calculate-prob [freq fav [nfreq nfav]]
-  (let [;;compression-factor (/ 200 100) ;; 2
-        ;;default-prob (/ 1 compression-factor) ;; 0.5
-        ;;new-nfav (+ nfav 200) ;; account for fav count skew below
-        ;;fav-to-freq-factor (/ new-nfav nfreq) ;; 5x more favs than freq, i.e. discount that much
-
-        adjusted-fav (if fav (inc fav) 1)
+(defn calculate-prob [freq fav]
+  (let [adjusted-fav (if fav (inc fav) 1)
         fav-to-freq (/ adjusted-fav freq)
         relevance (/ fav-to-freq (+ 0.5 fav-to-freq))]
-    (println "FREQ FAV REL COAR" freq adjusted-fav relevance (coarse-prob relevance))
     (coarse-prob relevance)))
 
-;; TODO:  an id -> relevance-score map from select-tweets?
 (defn select-tweets [tweets favstats]
   (let [get-nick #(:screen-name (:user %))
         nicks (map get-nick tweets)
@@ -178,20 +166,10 @@
                     tweets)
         favs-present (filter #(get nicks-freq (first %)) favstats)
         nicks-favs (zipmap (map first favs-present) (map second favs-present))
-        ;; XXX: Remove stats?
-        stats [(reduce + (vals nicks-favs))
-               (reduce + (vals nicks-freq))]
-        probs (zipmap nicks (map #(calculate-prob (get nicks-freq %) (get nicks-favs %) stats) nicks))
+        probs (zipmap nicks (map #(calculate-prob (get nicks-freq %) (get nicks-favs %)) nicks))
         relevance-map (zipmap (map :id tweets)
                               (map #(prob->relevance (get probs (get-nick %))) tweets))]
-
-    ;;(println "REL" relevance-map)
-    ;; (println "REL" (fortunate? (relevance->prob (val (first relevance-map)))))
-    relevance-map
-    #_(filter #(fortunate? (relevance->prob (val %)))
-            relevance-map)))
-
-;; from a tweet we get the nick then get probs
+    relevance-map))
 
 (rf/register-sub
  :selected-tweets
