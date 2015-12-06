@@ -21,13 +21,16 @@
 
 (defn edn-xhr
   "Make a request to uri and call callback cb with response read as edn"
-  [uri cb]
-  (xhr/send
-   uri
-   (fn [e]
-     (-> (.. e -target getResponseText)
-         reader/read-string
-         cb))))
+  ([uri cb]
+   (edn-xhr uri cb #(js/console.error "Xhr request failed" %)))
+  ([uri cb fail-cb]
+   (xhr/send
+    uri
+    (fn [e]
+      (if (= 200 (.. e -target getStatus))
+        (-> (.. e -target getResponseText)
+            reader/read-string cb)
+        (fail-cb (.-target e)))))))
 
 (rf/register-handler
  :startup
@@ -40,6 +43,13 @@
      (ls/set! :access-token at))
    (push-state! {} "Attentions" "/")
    (merge v db)))
+
+(rf/register-handler
+ :de-authenticate
+ rf/debug
+ (fn [db [_ tweets]]
+   (ls/dissoc! :access-token)
+   (dissoc db :access-token)))
 
 (rf/register-handler
  :tweets
@@ -56,7 +66,8 @@
  :get-tweets
  (fn [db _]
    (edn-xhr (str "/feeds/" (:access-token db) ".edn")
-            #(rf/dispatch [:tweets %]))
+            #(rf/dispatch [:tweets %])
+            #(rf/dispatch [:de-authenticate]))
    db))
 
 (rf/register-handler
