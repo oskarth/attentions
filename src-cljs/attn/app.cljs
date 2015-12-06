@@ -4,6 +4,7 @@
             [re-frame.core :as rf]
             [attn.localstorage :as ls]
             [goog.dom :as dom]
+            [goog.string :as gstring]
             [goog.Uri :as uri]
             [goog.net.XhrIo :as xhr]
             [cljs.reader :as reader]))
@@ -126,8 +127,8 @@
         sepd (separate-at-indices txt idcs)]
     (into [:span.h5]
           (if (= 0 (ffirst idcs))
-            (alternate (map entity ents) sepd)
-            (alternate sepd (map entity ents))))))
+            (alternate (map entity ents) (map gstring/unescapeEntities sepd))
+            (alternate (map gstring/unescapeEntities sepd) (map entity ents))))))
 
 (defn tweet [tweet]
   (let [rt-or-t  (or (:retweeted-status tweet) tweet)
