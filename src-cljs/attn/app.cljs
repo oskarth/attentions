@@ -123,7 +123,7 @@
           reverse
           reaction))))
      ;; (reaction
-     ;;  (reverse 
+     ;;  (reverse
      ;;   (sort-by :id (-> (fn [t] (assoc t ::selected (@selected? (:id t))))
      ;;                    (mapv ))))))))
 
@@ -143,13 +143,17 @@
 
 (defn roughly-equal? [x y] (< (Math/abs (- x y)) 0.1))
 
-(defn coarse-kw [prob]
+(defn prob->relevance [prob]
   (cond (roughly-equal? prob 0.25) :ok
         (roughly-equal? prob 0.5)  :good
         (roughly-equal? prob 0.75) :great
         :else                      :amazing))
 
-;; TODO:  an id -> relevance-score map from select-tweets?
+(defn relevance->prob [kw]
+  (cond (= kw :ok)    0.25
+        (= kw :good)  0.5
+        (= kw :great) 0.75))
+
 ;;TODO: Factor out / remove the general factors.
 (defn calculate-prob [freq fav [nfreq nfav]]
   (let [;;compression-factor (/ 200 100) ;; 2
@@ -163,9 +167,11 @@
     (println "FREQ FAV REL COAR" freq adjusted-fav relevance (coarse-prob relevance))
     (coarse-prob relevance)))
 
+;; TODO:  an id -> relevance-score map from select-tweets?
 (defn select-tweets [tweets favstats]
   (let [get-nick #(:screen-name (:user %))
         nicks (map get-nick tweets)
+        id-tweets (zipmap (map :id tweets) tweets)
         nicks-freq (reduce
                     #(assoc %1 (get-nick %2) (inc (%1 (get-nick %2) 0)))
                     {}
@@ -175,9 +181,15 @@
         ;; XXX: Remove stats?
         stats [(reduce + (vals nicks-favs))
                (reduce + (vals nicks-freq))]
-        probs (zipmap nicks (map #(calculate-prob (get nicks-freq %) (get nicks-favs %) stats) nicks))]
-    (println (keys (first tweets)))
-     (filter #(fortunate? (get probs (get-nick %))) tweets)))
+        probs (zipmap nicks (map #(calculate-prob (get nicks-freq %) (get nicks-favs %) stats) nicks))
+        relevance-map (zipmap (map :id tweets)
+                              (map #(prob->relevance (get probs (get-nick %))) tweets))]
+
+    ;; (println "REL" (fortunate? (relevance->prob (val (first relevance-map)))))
+    (filter #(fortunate? (relevance->prob (val %)))
+            relevance-map)))
+
+;; from a tweet we get the nick then get probs
 
 (rf/register-sub
  :selected-tweets
