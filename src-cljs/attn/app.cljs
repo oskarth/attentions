@@ -36,13 +36,14 @@
  :startup
  rf/debug
  (fn [db [_ v]]
-   (when (and (:access-token v)
-              (not (seq (:tweets db))))
-     (rf/dispatch [:get-tweets]))
-   (when-let [at (:access-token v)]
-     (ls/set! :access-token at))
-   (push-state! {} "Attentions" "/")
-   (merge v db)))
+   (let [tweets (ls/get :tweets)]
+     (when (and (:access-token v) (not (seq tweets))))
+       #_(rf/dispatch [:get-tweets])
+     (when-let [at (:access-token v)]
+       (ls/set! :access-token at))
+     (push-state! {} "Attentions" "/")
+     (-> (merge v db)
+         (assoc :tweets tweets)))))
 
 (rf/register-handler
  :de-authenticate
@@ -54,13 +55,15 @@
 (rf/register-handler
  :tweets
  (fn [db [_ tweets]]
+   (ls/update! :tweets #(reduce conj % tweets))
    (update db :tweets #(reduce conj % tweets))))
 
 (rf/register-handler
  :favstats
  rf/debug
- (fn [db [_ tweets]]
-   (update db :favstats #(reduce conj % tweets))))
+ (fn [db [_ stat-map]]
+   (ls/update! :favstats merge stat-map)
+   (update db :favstats merge stat-map)))
 
 (rf/register-handler
  :get-tweets
