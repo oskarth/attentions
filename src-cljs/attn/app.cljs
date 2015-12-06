@@ -249,8 +249,9 @@
    [:span.h5.ml2.gray.regular "Made by "
     [:a {:href "https://twitter.com/oskarth"} "@oskarth"] " & "
     [:a {:href "https://twitter.com/martinklepsch"} "@martinklepsch"]]]
-   [:h3 "Beat information overflow."]
-  [:p "A modified Twitter timeline that filters out frequent posters and promotes people whose tweets you often like."]])
+   [:h3.h3 "Beat information overflow."]
+   [:p {:style {:line-height 1.6}}
+    "A modified Twitter timeline that filters out frequent posters and promotes people whose tweets you often like."]])
 
 (defn app []
   (let [acc-tkn   (rf/subscribe [:access-token])
@@ -261,7 +262,7 @@
     ;; (println "enriched first" (first @enriched))
     ;; (doseq [t @enriched] (println (::selected t)))
     (fn []
-      [:div.container.mt4.p2
+      [:div.container.mt2.p2
        [:div#timeline.lg-col-8.col-10.mx-auto
         [heading]
         (if @acc-tkn
