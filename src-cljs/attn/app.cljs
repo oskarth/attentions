@@ -2,6 +2,7 @@
   (:require-macros [reagent.ratom :refer [reaction]])
   (:require [reagent.core :as reagent]
             [re-frame.core :as rf]
+            [attn.localstorage :as ls]
             [goog.dom :as dom]
             [goog.Uri :as uri]
             [goog.net.XhrIo :as xhr]
@@ -27,8 +28,11 @@
  :startup
  rf/debug
  (fn [db [_ v]]
-   (when (and (:access-token v) (not (seq (:tweets db))))
+   (when (and (:access-token v)
+              (not (seq (:tweets db))))
      (rf/dispatch [:get-tweets]))
+   (when-let [at (:access-token v)]
+     (ls/set! :access-token at))
    (merge v db)))
 
 (rf/register-handler
@@ -157,7 +161,7 @@
 
 (defn get-startup-data []
   (let [qd (.getQueryData (uri/parse js/location))]
-    {:access-token (.get qd "access-token")
+    {:access-token (or (.get qd "access-token") (ls/get :access-token))
      :tweets       #{}}))
 
 (defn init []
