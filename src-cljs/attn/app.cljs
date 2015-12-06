@@ -36,7 +36,6 @@
 
 (rf/register-handler
  :startup
- rf/debug
  (fn [db [_ v]]
    (let [tweets (merge (ls/get :tweets) (:tweets db))
          at     (or (:access-token v) (ls/get :access-token))]
@@ -50,7 +49,6 @@
 
 (rf/register-handler
  :de-authenticate
- rf/debug
  (fn [db [_ tweets]]
    (ls/dissoc! :access-token)
    (dissoc db :access-token)))
@@ -60,8 +58,8 @@
  (fn [db [_ tweets]]
    (let [old (or (:tweets db) {})
          new (reduce #(assoc-in %1 [:tweets (:id %2)] %2) old tweets)]
-     ;;(println "arg type" (type tweets))
-     ;;(println "db type" (type old))
+     ;; (println "arg type" (type tweets))
+     ;; (println "db type" (type old))
      (ls/set! :tweets (let [new-val (:tweets new)]
                         (println (count new-val) "items in localstorage")
                         (into {} (take 300 new-val))))
@@ -69,14 +67,12 @@
 
 (rf/register-handler
  :favstats
-;; rf/debug
  (fn [db [_ stat-map]]
    (ls/update! :favstats merge stat-map)
    (update db :favstats merge stat-map)))
 
 (rf/register-handler
  :get-tweets
-;; rf/debug
  (fn [db _]
    (edn-xhr (str "/feeds/" (:access-token db) ".edn")
             #(rf/dispatch [:tweets %])
@@ -85,7 +81,6 @@
 
 (rf/register-handler
  :get-favstats
-;; rf/debug
  (fn [db _]
    (edn-xhr (str "/favstats/" (:access-token db) ".edn")
             #(rf/dispatch [:favstats %]))
@@ -93,7 +88,6 @@
 
 (rf/register-handler
  :toggle-hidden
-;; rf/debug
  (fn [db _]
    (update db :show-hidden? not)))
 
@@ -116,9 +110,15 @@
  :tweets-enriched
  (fn [db [k]]
    (let [tweets   (rf/subscribe [:tweets])
-         selected? (rf/subscribe [:selected-tweets])]
+         rel-map  (rf/subscribe [:relevance-map])
+         selected (rf/subscribe [:selected-tweets])]
+     ;; (println "tweets" (count @tweets))
+     ;; (println "selected" (count @selected))
      (->> (vals @tweets)
-          (mapv (fn [t] (assoc t ::selected (@selected? (:id t)))))
+          (mapv (fn [t]
+                  (-> t
+                      (assoc ::selected (@selected (:id t)))
+                      (assoc ::relevance-score (get @rel-map (:id t))))))
           (sort-by :id)
           reverse
           reaction))))
@@ -173,11 +173,19 @@
     relevance-map))
 
 (rf/register-sub
- :selected-tweets
+ :relevance-map
  (fn [db [k]]
    (let [tweets   (rf/subscribe [:tweets])
          favstats (rf/subscribe [:favstats])]
-     (reaction (set (map :id (select-tweets (vals @tweets) @favstats)))))))
+     (reaction (select-tweets (vals @tweets) @favstats)))))
+
+(rf/register-sub
+ :selected-tweets
+ (fn [db [k]]
+   (let [tweets   (rf/subscribe [:tweets])
+         rel-map  (rf/subscribe [:relevance-map])]
+     ;; (println (into {} (filter #(fortunate? (relevance->prob (val %))) @rel-map)))
+     (reaction (set (keys (filter #(fortunate? (relevance->prob (val %))) @rel-map)))))))
 
 (def entity-type-mapping
   {:urls ::url, :user-mentions ::mention,
@@ -250,7 +258,10 @@
          (-> tweet :user :screen-name)])
       [tweet-text rt-or-t]
       (let [date (js/Date. (js/Date.parse (:created-at rt-or-t)))]
-        [:span.gray.h6.ml1 (.format date-fmt date)])]]))
+        [:span.gray.h6.ml1 (.format date-fmt date)])
+      (if-let [score (::relevance-score tweet)]
+        [:span.gray.h6 " / Score: "
+         [:span (name score)]])]]))
 
 (defn heading []
   [:div
