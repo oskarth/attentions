@@ -14,11 +14,9 @@ To determine a tweet's relevance, we currently only look at a person's posting
 frequency in the latest 200 tweets, and the logged-in user's favorite count of a
 given person. Here are some example to give you an idea how it works:
 
-`
-1. FREQ 5 FAV 1 REL :ok
-2. FREQ 2 FAV 12 REL :amazing
-3. FREQ 17 FAV 12 :good
-`
+> 1. FREQ 5 FAV 1 REL :ok
+> 2. FREQ 2 FAV 12 REL :amazing
+> 3. FREQ 17 FAV 12 :good
 
 In the first example, the person has tweeted 5 times and the logged-in user has
 only favorited 1 tweet. It's thus not a very high-relevant tweeter. On the other
