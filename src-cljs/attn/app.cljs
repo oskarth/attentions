@@ -249,12 +249,12 @@
         enriched  (rf/subscribe [:tweets-enriched])
         show-hdn? (rf/subscribe [:show-hidden?])]
     ;; (println "enriched cnt" (count @enriched))
-    (println "enriched uniq ids cnt" (count (set (map :id @enriched))))
-    (println "enriched first" (first @enriched))
+    ;; (println "enriched uniq ids cnt" (count (set (map :id @enriched))))
+    ;; (println "enriched first" (first @enriched))
     ;; (doseq [t @enriched] (println (::selected t)))
     (fn []
-      [:div.container.mt4
-       [:div#timeline.col-8.mx-auto
+      [:div.container.mt4.p2
+       [:div#timeline.lg-col-8.col-10.mx-auto
         [heading]
         (if @acc-tkn
           [:div
@@ -263,7 +263,8 @@
                                                        (rf/dispatch [:get-favstats]))}
              "Refresh feed"]
             [:a.btn.border.rounded {:on-click #(rf/dispatch [:toggle-hidden])}
-             (if @show-hdn? "Hide stuff" "Show hidden")]]
+             (if @show-hdn? "Hide stuff" "Show hidden")]
+            [:a.btn.maroon.regular {:on-click #(rf/dispatch [:de-authenticate])} "Sign out"]]
            (doall
             (for [t @enriched]
               (if (or (::selected t) @show-hdn?)
