@@ -7,6 +7,8 @@
             [goog.net.XhrIo :as xhr]
             [cljs.reader :as reader]))
 
+(enable-console-print!)
+
 (defn trace [x]
   (js/console.log (pr-str x))
   x)
