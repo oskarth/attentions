@@ -218,8 +218,8 @@
     [:a {:href "https://twitter.com/martinklepsch"} "@martinklepsch"]]])
 
 (defn app []
-  (let [acc-tkn  (rf/subscribe [:access-token])
-        enriched (rf/subscribe [:tweets-enriched])
+  (let [acc-tkn   (rf/subscribe [:access-token])
+        enriched  (rf/subscribe [:tweets-enriched])
         show-hdn? (rf/subscribe [:show-hidden?])]
     [:div.container.mt4
      [:div#timeline.col-8.mx-auto
@@ -227,7 +227,9 @@
       (if @acc-tkn
         [:div
          [:p
-          [:a.btn.border.rounded.mr2 {:on-click #(do (rf/dispatch [:get-tweets]) (rf/dispatch [:get-favstats]))} "Refresh feed"]
+          [:a.btn.border.rounded.mr2 {:on-click #(do (rf/dispatch [:get-tweets])
+                                                     (rf/dispatch [:get-favstats]))}
+           "Refresh feed"]
           [:a.btn.border.rounded {:on-click #(rf/dispatch [:toggle-hidden])}
            (if @show-hdn? "Hide stuff" "Show hidden")]]
          (doall
