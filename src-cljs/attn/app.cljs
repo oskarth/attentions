@@ -38,9 +38,12 @@
  :startup
  (fn [db [_ v]]
    (let [tweets (merge (ls/get :tweets) (:tweets db))
+         ;; stats  (merge (ls/get :tweets) (:tweets db))
          at     (or (:access-token v) (ls/get :access-token))]
      (when (and at (empty? tweets))
        (rf/dispatch [:get-tweets]))
+     ;; (when (and at (empty? tweets))
+     ;;   (rf/dispatch [:get-tweets]))
      (when at (ls/set! :access-token at))
      (push-state! {} "Attentions" "/")
      (-> db
