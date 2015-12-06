@@ -43,6 +43,7 @@
 
 (deftask production []
   (task-options! cljs {:optimizations :advanced
+                       :source-map true
                        :compiler-options {:pseudo-names true}}
                  sass {:output-style :compressed}
                  serve {:port 8080})
