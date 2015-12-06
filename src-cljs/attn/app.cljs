@@ -53,11 +53,22 @@
  (fn [db [k]]
    (reaction (reverse (sort-by :id (get @db k))))))
 
+(defn fortunate? [prob]
+  (> (* prob 100) (rand-int 100)))
+
+;; TODO: add relevance into mix
 (defn select-tweets [tweets]
-  (let [nicks-freq (reduce #(assoc %1 (:screen-name (:user %2)) (inc (%1 (:screen-name (:user %2)) 0)))
-                           {} tweets)]
-    (println "NICK FREQ:" nicks-freq)
-    (take 10 tweets)))
+  (let [get-nick #(:screen-name (:user %))
+        nicks-freq (reduce
+                    #(assoc %1 (get-nick %2) (inc (%1 (get-nick %2) 0)))
+                    {}
+                    tweets)
+        nicks-tweets (zipmap (map get-nick tweets) tweets)
+        freq-prob (zipmap (keys nicks-freq)
+                          (map #(/ 1 (second %)) nicks-freq))]
+    (vals (filter #(fortunate? (get freq-prob (first %)))
+                  nicks-tweets))))
+
 
 (def entity-type-mapping
   {:urls ::url, :user-mentions ::mention,
