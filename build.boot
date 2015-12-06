@@ -42,9 +42,7 @@
         (if prod (wait) identity)))
 
 (deftask production []
-  (task-options! cljs {:optimizations :advanced
-                       :source-map true
-                       :compiler-options {:pseudo-names true}}
+  (task-options! cljs {:optimizations :advanced}
                  sass {:output-style :compressed}
                  serve {:port 8080})
   identity)
