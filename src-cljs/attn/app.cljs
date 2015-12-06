@@ -279,7 +279,7 @@
     ;; (doseq [t @enriched] (println (::selected t)))
     (fn []
       [:div.container.mt2.p2
-       [:div#timeline.lg-col-8.col-10.mx-auto
+       [:div#timeline.lg-col-8.sm-col-10.col-12.mx-auto
         [heading]
         (if @acc-tkn
           [:div
