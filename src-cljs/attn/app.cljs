@@ -2,7 +2,9 @@
   (:require-macros [reagent.ratom :refer [reaction]])
   (:require [reagent.core :as reagent]
             [re-frame.core :as rf]
+            [attn.localstorage :as ls]
             [goog.dom :as dom]
+            [goog.string :as gstring]
             [goog.Uri :as uri]
             [goog.net.XhrIo :as xhr]
             [cljs.reader :as reader]))
@@ -12,6 +14,10 @@
 (defn trace [x]
   (js/console.log (pr-str x))
   x)
+
+(defn push-state!
+  ([state title] (.pushState js/history state title))
+  ([state title path] (.pushState js/history state title path)))
 
 (defn edn-xhr
   "Make a request to uri and call callback cb with response read as edn"
@@ -27,8 +33,12 @@
  :startup
  rf/debug
  (fn [db [_ v]]
-   (when (and (:access-token v) (not (seq (:tweets db))))
+   (when (and (:access-token v)
+              (not (seq (:tweets db))))
      (rf/dispatch [:get-tweets]))
+   (when-let [at (:access-token v)]
+     (ls/set! :access-token at))
+   (push-state! {} "Attentions" "/")
    (merge v db)))
 
 (rf/register-handler
@@ -143,10 +153,10 @@
         ents (get-entities tweet)
         idcs (map :indices ents)
         sepd (separate-at-indices txt idcs)]
-    (into [:span]
+    (into [:span.h5]
           (if (= 0 (ffirst idcs))
-            (alternate (map entity ents) sepd)
-            (alternate sepd (map entity ents))))))
+            (alternate (map entity ents) (map gstring/unescapeEntities sepd))
+            (alternate (map gstring/unescapeEntities sepd) (map entity ents))))))
 
 (defn tweet [tweet]
   (let [rt-or-t  (or (:retweeted-status tweet) tweet)
@@ -156,16 +166,19 @@
      [:div.mr2.p0
       [:img.rounded {:src (-> rt-or-t :user :profile-image-url)
                      :style {:width "48px" :height "48px"}}]]
-     [tweet-text rt-or-t]
-     (when (:retweeted-status tweet)
-       [:span.ml3.bold.gray "RT"])]))
+     [:div.relative
+      (when (:retweeted-status tweet)
+        [:span.h6.block.gray.absolute
+         {:style {:top "-15px"}} "Retweeted by @"
+         (-> tweet :user :screen-name)])
+      [tweet-text rt-or-t]]]))
 
 (defn app []
   (let [acc-tkn (rf/subscribe [:access-token])
         tweets (rf/subscribe [:tweets])
         favstats (rf/subscribe [:favstats])]
       [:div.container.mt4
-       [:div#timeline.col-10.mx-auto
+       [:div#timeline.col-8.mx-auto
         [:h1 "Attentions"]
         (if @acc-tkn
           [:div
@@ -178,9 +191,14 @@
 
 (defn get-startup-data []
   (let [qd (.getQueryData (uri/parse js/location))]
+<<<<<<< HEAD
     {:access-token (.get qd "access-token")
      :tweets       #{}
      :favstats     #{}}))
+=======
+    {:access-token (or (.get qd "access-token") (ls/get :access-token))
+     :tweets       #{}}))
+>>>>>>> 20e77eaebd3b6d4a86c70664016b50a9e5270c62
 
 (defn init []
   (rf/dispatch-sync [:startup (get-startup-data)])
