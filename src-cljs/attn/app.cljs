@@ -191,14 +191,9 @@
 
 (defn get-startup-data []
   (let [qd (.getQueryData (uri/parse js/location))]
-<<<<<<< HEAD
-    {:access-token (.get qd "access-token")
+    {:access-token (or (.get qd "access-token") (ls/get :access-token))
      :tweets       #{}
      :favstats     #{}}))
-=======
-    {:access-token (or (.get qd "access-token") (ls/get :access-token))
-     :tweets       #{}}))
->>>>>>> 20e77eaebd3b6d4a86c70664016b50a9e5270c62
 
 (defn init []
   (rf/dispatch-sync [:startup (get-startup-data)])
