@@ -54,7 +54,11 @@
  (fn [db [k]]
    (reaction (reverse (sort-by :id (get @db k))))))
 
-
+(defn select-tweets [tweets]
+  (let [nicks-freq (reduce #(assoc %1 (:screen-name (:user %2)) (inc (%1 (:screen-name (:user %2)) 0)))
+                           {} tweets)]
+    (println "NICK FREQ:" nicks-freq)
+    (take 10 tweets)))
 
 (defn tweet [tweet]
   (let [rt-or-t  (or (:retweeted-status tweet) tweet)
@@ -77,7 +81,7 @@
         (if @acc-tkn
           [:div
            [:p "Check out your " [:a {:on-click #(rf/dispatch [:get-tweets])} "feed"] "."]
-           (for [t @tweets]
+           (for [t (select-tweets @tweets)]
              ^{:key (:id t)}
              [tweet t])]
           [:div [:a.btn.bg-green.white.rounded {:href "/auth"} "Sign in with Twitter"]])]]))
