@@ -184,7 +184,7 @@
  (fn [db [k]]
    (let [tweets   (rf/subscribe [:tweets])
          rel-map  (rf/subscribe [:relevance-map])]
-     ;; (println (into {} (filter #(fortunate? (relevance->prob (val %))) @rel-map)))
+                    ;; since filter returns tuples maybe use `map first` here
      (reaction (set (keys (filter #(fortunate? (relevance->prob (val %))) @rel-map)))))))
 
 (def entity-type-mapping
