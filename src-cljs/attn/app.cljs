@@ -21,13 +21,37 @@
 
 (defn edn-xhr
   "Make a request to uri and call callback cb with response read as edn"
-  [uri cb]
-  (xhr/send
-   uri
-   (fn [e]
-     (-> (.. e -target getResponseText)
-         reader/read-string
-         cb))))
+  ([uri cb]
+   (edn-xhr uri cb #(js/console.error "Xhr request failed" %)))
+  ([uri cb fail-cb]
+   (xhr/send
+    uri
+    (fn [e]
+      (if (= 200 (.. e -target getStatus))
+        (-> (.. e -target getResponseText)
+            reader/read-string cb)
+        (fail-cb (.-target e)))))))
+
+(defn fortunate? [prob]
+  (> (* prob 100) (rand-int 100)))
+
+(defn select-tweets [tweets favstats]
+  (let [get-nick #(:screen-name (:user %))
+        nicks-tweets (zipmap (map get-nick tweets) tweets)
+        nicks-freq (reduce
+                    #(assoc %1 (get-nick %2) (inc (%1 (get-nick %2) 0)))
+                    {}
+                    tweets)
+        favs (filter #(get nicks-freq (first %)) favstats)
+        nicks-favs (zipmap (map first favs) (map second favs))
+        freq-prob (zipmap (keys nicks-freq)
+                          (map #(/ 1 (second %)) nicks-freq))
+        scores (merge-with * freq-prob nicks-favs)]
+    ;;(println "NICKS-FAVS " (sort-by key nicks-favs))
+    ;;(println "NICKS-FREQ " (sort-by key nicks-freq))
+    ;;(println "SCORES " (sort-by key scores))
+    (vals (filter #(fortunate? (get scores (first %)))
+                  nicks-tweets))))
 
 (rf/register-handler
  :startup
@@ -40,6 +64,13 @@
      (ls/set! :access-token at))
    (push-state! {} "Attentions" "/")
    (merge v db)))
+
+(rf/register-handler
+ :de-authenticate
+ rf/debug
+ (fn [db [_ tweets]]
+   (ls/dissoc! :access-token)
+   (dissoc db :access-token)))
 
 (rf/register-handler
  :tweets
@@ -56,7 +87,8 @@
  :get-tweets
  (fn [db _]
    (edn-xhr (str "/feeds/" (:access-token db) ".edn")
-            #(rf/dispatch [:tweets %]))
+            #(rf/dispatch [:tweets %])
+            #(rf/dispatch [:de-authenticate]))
    db))
 
 (rf/register-handler
@@ -67,6 +99,17 @@
             #(rf/dispatch [:favstats %]))
    db))
 
+(rf/register-handler
+ :toggle-hidden
+ rf/debug
+ (fn [db _]
+   (update db :show-hidden? not)))
+
+(rf/register-sub
+ :show-hidden?
+ (fn [db [k]]
+   (reaction (get @db k))))
+
 (rf/register-sub
  :access-token
  (fn [db [k]]
@@ -76,6 +119,15 @@
  :tweets
  (fn [db [k]]
    (reaction (reverse (sort-by :id (get @db k))))))
+
+(rf/register-sub
+ :tweets-enriched
+ (fn [db [k]]
+   (let [tweets    (rf/subscribe [:tweets])
+         selected? (rf/subscribe [:selected-tweets])]
+     (reaction
+      (-> (fn [t] (assoc t ::selected (@selected? t)))
+          (mapv @tweets))))))
 
 (rf/register-sub
  :favstats
@@ -112,6 +164,13 @@
                (reduce + (vals nicks-freq))]
         probs (zipmap nicks (map #(calculate-prob (get nicks-freq %) (get nicks-favs %) stats) nicks))]
      (filter #(fortunate? (get probs (get-nick %))) tweets)))
+
+(rf/register-sub
+ :selected-tweets
+ (fn [db [k]]
+   (let [tweets   (rf/subscribe [:tweets])
+         favstats (rf/subscribe [:favstats])]
+     (reaction (set (select-tweets @tweets @favstats))))))
 
 (def entity-type-mapping
   {:urls ::url, :user-mentions ::mention,
@@ -175,7 +234,7 @@
     [:div.flex.flex-center.p2
      [:div.mr2.p0
       [:img.rounded {:src (-> rt-or-t :user :profile-image-url)
-                     :style {:width "48px" :height "48px"}}]]
+                     :width "48px" :height "48px" :style {:max-width "none"}}]]
      [:div.relative
       (when (:retweeted-status tweet)
         [:span.h6.block.gray.absolute
@@ -183,21 +242,32 @@
          (-> tweet :user :screen-name)])
       [tweet-text rt-or-t]]]))
 
+(defn heading []
+  [:h1 "Attentions"
+   [:span.h5.ml2.gray.regular "Made by "
+    [:a {:href "https://twitter.com/oskarth"} "@oskarth"] " & "
+    [:a {:href "https://twitter.com/martinklepsch"} "@martinklepsch"]]])
+
 (defn app []
-  (let [acc-tkn (rf/subscribe [:access-token])
-        tweets (rf/subscribe [:tweets])
-        favstats (rf/subscribe [:favstats])]
-      [:div.container.mt4
-       [:div#timeline.col-8.mx-auto
-        [:h1 "Attentions"]
-        (if @acc-tkn
-          [:div
-           [:p "Check out your " [:a {:on-click #(do (rf/dispatch [:get-tweets])
-                                                      (rf/dispatch [:get-favstats]))} "feed"] "."]
-           (for [t (select-tweets @tweets @favstats)]
-             ^{:key (:id t)}
-             [tweet t])]
-          [:div [:a.btn.bg-green.white.rounded {:href "/auth"} "Sign in with Twitter"]])]]))
+  (let [acc-tkn   (rf/subscribe [:access-token])
+        enriched  (rf/subscribe [:tweets-enriched])
+        show-hdn? (rf/subscribe [:show-hidden?])]
+    [:div.container.mt4
+     [:div#timeline.col-8.mx-auto
+      [heading]
+      (if @acc-tkn
+        [:div
+         [:p
+          [:a.btn.border.rounded.mr2 {:on-click #(do (rf/dispatch [:get-tweets])
+                                                     (rf/dispatch [:get-favstats]))}
+           "Refresh feed"]
+          [:a.btn.border.rounded {:on-click #(rf/dispatch [:toggle-hidden])}
+           (if @show-hdn? "Hide stuff" "Show hidden")]]
+         (doall
+          (for [t @enriched]
+            (if (or (::selected t) @show-hdn?)
+              ^{:key (:id t)} [:div {:class (if (::selected t) "" "gray")} [tweet t]])))]
+        [:div [:a.btn.bg-green.white.rounded {:href "/auth"} "Sign in with Twitter"]])]]))
 
 (defn get-startup-data []
   (let [qd (.getQueryData (uri/parse js/location))]

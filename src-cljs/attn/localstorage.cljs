@@ -2,7 +2,7 @@
   (:require [goog.storage.Storage :as Storage]
             [goog.storage.mechanism.HTML5LocalStorage :as html5localstore]
             [cljs.reader :as reader])
-  (:refer-clojure :exclude [get]))
+  (:refer-clojure :exclude [get dissoc!]))
 
 ;; https://github.com/funcool/hodgepodge
 (defn- storage []
@@ -13,20 +13,21 @@
 (defn get
   "Gets value from local storage."
   [key]
-  (let [store (storage)]
-    (some-> (.get store (str key))
-            reader/read-string)))
+  (some-> (.get (storage) (str key))
+          reader/read-string))
 
 ;; set! is a special form directly embedded in the AST
 ;; and this can't be excluded like get 
 (defn set!*
   "Stores key value in local storage."
   [key val]
-  (let [store (storage)]
-    (.set store (str key) (pr-str val))))
+  (.set (storage) (str key) (pr-str val)))
 (def set! set!*)
 
 (defn update!
   [k f & args]
-  (let [current-val (get k)]
-    (set!* k (apply f current-val args))))
+  (set!* k (apply f (get k) args)))
+
+(defn dissoc!
+  [k]
+  (.remove (storage) (str k)))
