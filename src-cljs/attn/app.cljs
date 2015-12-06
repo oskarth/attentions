@@ -99,6 +99,17 @@
             #(rf/dispatch [:favstats %]))
    db))
 
+(rf/register-handler
+ :toggle-hidden
+ rf/debug
+ (fn [db _]
+   (update db :show-hidden? not)))
+
+(rf/register-sub
+ :show-hidden?
+ (fn [db [k]]
+   (reaction (get @db k))))
+
 (rf/register-sub
  :access-token
  (fn [db [k]]
@@ -114,8 +125,6 @@
  (fn [db [k]]
    (let [tweets    (rf/subscribe [:tweets])
          selected? (rf/subscribe [:selected-tweets])]
-     (println (count @tweets))
-     (println (count @selected?))
      (reaction
       (-> (fn [t] (assoc t ::selected (@selected? t)))
           (mapv @tweets))))))
@@ -210,21 +219,22 @@
 
 (defn app []
   (let [acc-tkn  (rf/subscribe [:access-token])
-        tweets   (rf/subscribe [:tweets])
         enriched (rf/subscribe [:tweets-enriched])
-        selected (rf/subscribe [:selected-tweets])]
-      [:div.container.mt4
-       [:div#timeline.col-8.mx-auto
-        [heading]
-        (if @acc-tkn
-          [:div
-           [:p "Check out your " [:a {:on-click #(do (rf/dispatch [:get-tweets])
-                                                     (rf/dispatch [:get-favstats]))} "feed"] "."]
-           (for [t @enriched]
-             (if (::selected t)
-               ^{:key (:id t)} [:div [tweet t]]
-               ^{:key (:id t)} [:div.gray [tweet t]]))]
-          [:div [:a.btn.bg-green.white.rounded {:href "/auth"} "Sign in with Twitter"]])]]))
+        show-hdn? (rf/subscribe [:show-hidden?])]
+    [:div.container.mt4
+     [:div#timeline.col-8.mx-auto
+      [heading]
+      (if @acc-tkn
+        [:div
+         [:p
+          [:a.btn.border.rounded.mr2 {:on-click #(do (rf/dispatch [:get-tweets]) (rf/dispatch [:get-favstats]))} "Refresh feed"]
+          [:a.btn.border.rounded {:on-click #(rf/dispatch [:toggle-hidden])}
+           (if @show-hdn? "Hide stuff" "Show hidden")]]
+         (doall
+          (for [t @enriched]
+            (if (or (::selected t) @show-hdn?)
+              ^{:key (:id t)} [:div {:class (if (::selected t) "" "gray")} [tweet t]])))]
+        [:div [:a.btn.bg-green.white.rounded {:href "/auth"} "Sign in with Twitter"]])]]))
 
 (defn get-startup-data []
   (let [qd (.getQueryData (uri/parse js/location))]
