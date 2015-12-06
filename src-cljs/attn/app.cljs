@@ -185,8 +185,10 @@
         relevance-map (zipmap (map :id tweets)
                               (map #(prob->relevance (get probs (get-nick %))) tweets))]
 
+    ;;(println "REL" relevance-map)
     ;; (println "REL" (fortunate? (relevance->prob (val (first relevance-map)))))
-    (filter #(fortunate? (relevance->prob (val %)))
+    relevance-map
+    #_(filter #(fortunate? (relevance->prob (val %)))
             relevance-map)))
 
 ;; from a tweet we get the nick then get probs
