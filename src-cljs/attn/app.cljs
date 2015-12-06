@@ -32,27 +32,6 @@
             reader/read-string cb)
         (fail-cb (.-target e)))))))
 
-(defn fortunate? [prob]
-  (> (* prob 100) (rand-int 100)))
-
-(defn select-tweets [tweets favstats]
-  (let [get-nick #(:screen-name (:user %))
-        nicks-tweets (zipmap (map get-nick tweets) tweets)
-        nicks-freq (reduce
-                    #(assoc %1 (get-nick %2) (inc (%1 (get-nick %2) 0)))
-                    {}
-                    tweets)
-        favs (filter #(get nicks-freq (first %)) favstats)
-        nicks-favs (zipmap (map first favs) (map second favs))
-        freq-prob (zipmap (keys nicks-freq)
-                          (map #(/ 1 (second %)) nicks-freq))
-        scores (merge-with * freq-prob nicks-favs)]
-    ;;(println "NICKS-FAVS " (sort-by key nicks-favs))
-    ;;(println "NICKS-FREQ " (sort-by key nicks-freq))
-    ;;(println "SCORES " (sort-by key scores))
-    (vals (filter #(fortunate? (get scores (first %)))
-                  nicks-tweets))))
-
 (rf/register-handler
  :startup
  rf/debug
