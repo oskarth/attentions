@@ -32,6 +32,27 @@
             reader/read-string cb)
         (fail-cb (.-target e)))))))
 
+(defn fortunate? [prob]
+  (> (* prob 100) (rand-int 100)))
+
+(defn select-tweets [tweets favstats]
+  (let [get-nick #(:screen-name (:user %))
+        nicks-tweets (zipmap (map get-nick tweets) tweets)
+        nicks-freq (reduce
+                    #(assoc %1 (get-nick %2) (inc (%1 (get-nick %2) 0)))
+                    {}
+                    tweets)
+        favs (filter #(get nicks-freq (first %)) favstats)
+        nicks-favs (zipmap (map first favs) (map second favs))
+        freq-prob (zipmap (keys nicks-freq)
+                          (map #(/ 1 (second %)) nicks-freq))
+        scores (merge-with * freq-prob nicks-favs)]
+    ;;(println "NICKS-FAVS " (sort-by key nicks-favs))
+    ;;(println "NICKS-FREQ " (sort-by key nicks-freq))
+    ;;(println "SCORES " (sort-by key scores))
+    (vals (filter #(fortunate? (get scores (first %)))
+                  nicks-tweets))))
+
 (rf/register-handler
  :startup
  rf/debug
@@ -93,26 +114,12 @@
  (fn [db [k]]
    (reaction (get @db k))))
 
-(defn fortunate? [prob]
-  (> (* prob 100) (rand-int 100)))
-
-(defn select-tweets [tweets favstats]
-  (let [get-nick #(:screen-name (:user %))
-        nicks-tweets (zipmap (map get-nick tweets) tweets)
-        nicks-freq (reduce
-                    #(assoc %1 (get-nick %2) (inc (%1 (get-nick %2) 0)))
-                    {}
-                    tweets)
-        favs (filter #(get nicks-freq (first %)) favstats)
-        nicks-favs (zipmap (map first favs) (map second favs))
-        freq-prob (zipmap (keys nicks-freq)
-                          (map #(/ 1 (second %)) nicks-freq))
-        scores (merge-with * freq-prob nicks-favs)]
-    ;;(println "NICKS-FAVS " (sort-by key nicks-favs))
-    ;;(println "NICKS-FREQ " (sort-by key nicks-freq))
-    ;;(println "SCORES " (sort-by key scores))
-    (vals (filter #(fortunate? (get scores (first %)))
-                  nicks-tweets))))
+(rf/register-sub
+ :selected-tweets
+ (fn [db [k]]
+   (let [tweets   (rf/subscribe [:tweets])
+         favstats (rf/subscribe [:favstats])]
+     (reaction (reverse (sort-by :id (select-tweets @tweets @favstats)))))))
 
 (def entity-type-mapping
   {:urls ::url, :user-mentions ::mention,
@@ -191,17 +198,17 @@
     [:a {:href "https://twitter.com/martinklepsch"} "@martinklepsch"]]])
 
 (defn app []
-  (let [acc-tkn (rf/subscribe [:access-token])
-        tweets (rf/subscribe [:tweets])
-        favstats (rf/subscribe [:favstats])]
+  (let [acc-tkn  (rf/subscribe [:access-token])
+        tweets   (rf/subscribe [:tweets])
+        selected (rf/subscribe [:selected-tweets])]
       [:div.container.mt4
        [:div#timeline.col-8.mx-auto
         [heading]
         (if @acc-tkn
           [:div
            [:p "Check out your " [:a {:on-click #(do (rf/dispatch [:get-tweets])
-                                                      (rf/dispatch [:get-favstats]))} "feed"] "."]
-           (for [t (select-tweets @tweets @favstats)]
+                                                     (rf/dispatch [:get-favstats]))} "feed"] "."]
+           (for [t @selected]
              ^{:key (:id t)}
              [tweet t])]
           [:div [:a.btn.bg-green.white.rounded {:href "/auth"} "Sign in with Twitter"]])]]))
