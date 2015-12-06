@@ -36,13 +36,14 @@
  :startup
  rf/debug
  (fn [db [_ v]]
-   (let [tweets (ls/get :tweets)]
-     (when (and (:access-token v) (not (seq tweets))))
-       #_(rf/dispatch [:get-tweets])
-     (when-let [at (:access-token v)]
-       (ls/set! :access-token at))
+   (let [tweets (ls/get :tweets)
+         at     (:access-token v)]
+     (when (and at (not (seq tweets))))
+       (rf/dispatch [:get-tweets])
+     (when at (ls/set! :access-token at))
      (push-state! {} "Attentions" "/")
-     (-> (merge v db)
+     (-> db
+         (assoc :access-token at)
          (assoc :tweets tweets)))))
 
 (rf/register-handler
@@ -55,8 +56,13 @@
 (rf/register-handler
  :tweets
  (fn [db [_ tweets]]
-   (ls/update! :tweets #(reduce conj % tweets))
-   (update db :tweets #(reduce conj % tweets))))
+   (let [old (or (:tweets db) #{})]
+     (println "arg type" (type tweets))
+     (println "db type" (type old))
+     (ls/set! :tweets (let [new-val (reduce conj old tweets)]
+                        (println (count new-val) "items in localstorage")
+                        (take 300 (sort-by :id new-val))))
+     (assoc db :tweets (reduce conj old tweets)))))
 
 (rf/register-handler
  :favstats
