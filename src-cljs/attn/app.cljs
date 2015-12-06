@@ -133,7 +133,22 @@
 (defn fortunate? [prob]
   (> (* prob 100) (rand-int 100)))
 
-;; TODO: Factor out / remove the general factors.
+(defn coarse-prob [prob]
+  (cond (< prob 0.35) 0.25
+        (< prob 0.60)  0.5
+        (< prob 0.85) 0.75
+        :else         1))
+
+(defn roughly-equal? [x y] (< (Math/abs (- x y)) 0.1))
+
+(defn coarse-kw [prob]
+  (cond (roughly-equal? prob 0.25) :ok
+        (roughly-equal? prob 0.5)  :good
+        (roughly-equal? prob 0.75) :great
+        :else                      :amazing))
+
+;; TODO:  an id -> relevance-score map from select-tweets?
+;;TODO: Factor out / remove the general factors.
 (defn calculate-prob [freq fav [nfreq nfav]]
   (let [;;compression-factor (/ 200 100) ;; 2
         ;;default-prob (/ 1 compression-factor) ;; 0.5
@@ -143,8 +158,8 @@
         adjusted-fav (if fav (inc fav) 1)
         fav-to-freq (/ adjusted-fav freq)
         relevance (/ fav-to-freq (+ 0.5 fav-to-freq))]
-    (println "FREQ FAV REL" freq adjusted-fav relevance)
-    relevance))
+    (println "FREQ FAV REL COAR" freq adjusted-fav relevance (coarse-prob relevance))
+    (coarse-prob relevance)))
 
 (defn select-tweets [tweets favstats]
   (let [get-nick #(:screen-name (:user %))
@@ -159,6 +174,7 @@
         stats [(reduce + (vals nicks-favs))
                (reduce + (vals nicks-freq))]
         probs (zipmap nicks (map #(calculate-prob (get nicks-freq %) (get nicks-favs %) stats) nicks))]
+    (println (keys (first tweets)))
      (filter #(fortunate? (get probs (get-nick %))) tweets)))
 
 (rf/register-sub
