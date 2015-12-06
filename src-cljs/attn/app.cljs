@@ -98,7 +98,7 @@
       ::media   [:a {:href (:url ent)}
                  (:display-url ent)]
       ::mention [:a {:href (str t (:screen-name ent))}
-                 (:screen-name ent)]
+                 (str "@" (:screen-name ent))]
       ::hashtag [:a {:href (str t "hashtag/" (:text ent))}
                  (str "#" (:text ent))]
       ::symbol  [:span "Uhm...?"]
