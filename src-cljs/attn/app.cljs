@@ -120,7 +120,7 @@
         ents (get-entities tweet)
         idcs (map :indices ents)
         sepd (separate-at-indices txt idcs)]
-    (into [:span]
+    (into [:span.h5]
           (if (= 0 (ffirst idcs))
             (alternate (map entity ents) sepd)
             (alternate sepd (map entity ents))))))
@@ -133,15 +133,19 @@
      [:div.mr2.p0
       [:img.rounded {:src (-> rt-or-t :user :profile-image-url)
                      :style {:width "48px" :height "48px"}}]]
-     [tweet-text rt-or-t]
-     (when (:retweeted-status tweet)
-       [:span.ml3.bold.gray "RT"])]))
+     [:div.relative
+      (when (:retweeted-status tweet)
+        (trace tweet)
+        [:span.h6.block.gray.absolute
+         {:style {:top "-15px"}} "Retweeted by @"
+         (-> tweet :user :screen-name)])
+      [tweet-text rt-or-t]]]))
 
 (defn app []
   (let [acc-tkn (rf/subscribe [:access-token])
         tweets (rf/subscribe [:tweets])]
       [:div.container.mt4
-       [:div#timeline.col-10.mx-auto
+       [:div#timeline.col-8.mx-auto
         [:h1 "Attentions"]
         (if @acc-tkn
           [:div
