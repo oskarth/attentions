@@ -15,6 +15,10 @@
   (js/console.log (pr-str x))
   x)
 
+(defn push-state!
+  ([state title] (.pushState js/history state title))
+  ([state title path] (.pushState js/history state title path)))
+
 (defn edn-xhr
   "Make a request to uri and call callback cb with response read as edn"
   [uri cb]
@@ -34,6 +38,7 @@
      (rf/dispatch [:get-tweets]))
    (when-let [at (:access-token v)]
      (ls/set! :access-token at))
+   (push-state! {} "Attentions" "/")
    (merge v db)))
 
 (rf/register-handler
@@ -140,7 +145,6 @@
                      :style {:width "48px" :height "48px"}}]]
      [:div.relative
       (when (:retweeted-status tweet)
-        (trace tweet)
         [:span.h6.block.gray.absolute
          {:style {:top "-15px"}} "Retweeted by @"
          (-> tweet :user :screen-name)])
