@@ -110,6 +110,17 @@
    (reaction (reverse (sort-by :id (get @db k))))))
 
 (rf/register-sub
+ :tweets-enriched
+ (fn [db [k]]
+   (let [tweets    (rf/subscribe [:tweets])
+         selected? (rf/subscribe [:selected-tweets])]
+     (println (count @tweets))
+     (println (count @selected?))
+     (reaction
+      (-> (fn [t] (assoc t ::selected (@selected? t)))
+          (mapv @tweets))))))
+
+(rf/register-sub
  :favstats
  (fn [db [k]]
    (reaction (get @db k))))
@@ -119,7 +130,7 @@
  (fn [db [k]]
    (let [tweets   (rf/subscribe [:tweets])
          favstats (rf/subscribe [:favstats])]
-     (reaction (reverse (sort-by :id (select-tweets @tweets @favstats)))))))
+     (reaction (set (select-tweets @tweets @favstats))))))
 
 (def entity-type-mapping
   {:urls ::url, :user-mentions ::mention,
@@ -183,7 +194,7 @@
     [:div.flex.flex-center.p2
      [:div.mr2.p0
       [:img.rounded {:src (-> rt-or-t :user :profile-image-url)
-                     :style {:width "48px" :height "48px"}}]]
+                     :width "48px" :height "48px" :style {:max-width "none"}}]]
      [:div.relative
       (when (:retweeted-status tweet)
         [:span.h6.block.gray.absolute
@@ -200,6 +211,7 @@
 (defn app []
   (let [acc-tkn  (rf/subscribe [:access-token])
         tweets   (rf/subscribe [:tweets])
+        enriched (rf/subscribe [:tweets-enriched])
         selected (rf/subscribe [:selected-tweets])]
       [:div.container.mt4
        [:div#timeline.col-8.mx-auto
@@ -208,9 +220,10 @@
           [:div
            [:p "Check out your " [:a {:on-click #(do (rf/dispatch [:get-tweets])
                                                      (rf/dispatch [:get-favstats]))} "feed"] "."]
-           (for [t @selected]
-             ^{:key (:id t)}
-             [tweet t])]
+           (for [t @enriched]
+             (if (::selected t)
+               ^{:key (:id t)} [:div [tweet t]]
+               ^{:key (:id t)} [:div.gray [tweet t]]))]
           [:div [:a.btn.bg-green.white.rounded {:href "/auth"} "Sign in with Twitter"]])]]))
 
 (defn get-startup-data []
