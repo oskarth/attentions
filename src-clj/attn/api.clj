@@ -55,10 +55,12 @@ Note that the key called oauth_token refers to the access token."}
         :body (json/read-str :key-fn case/->kebab-case-keyword))))
 
 (defn get-tweets [access-token]
-  (twitter-api-req "https://api.twitter.com/1.1/statuses/home_timeline.json" access-token {:count 200}))
+  (twitter-api-req "https://api.twitter.com/1.1/statuses/home_timeline.json"
+                   access-token {:count 200}))
 
 (defn get-favs [access-token]
-  (twitter-api-req "https://api.twitter.com/1.1/favorites/list.json" access-token {:count 200}))
+  (twitter-api-req "https://api.twitter.com/1.1/favorites/list.json"
+                   access-token {:count 200}))
 
 (def app-routes
   ["/" {"" (fn [req] {:status 200
@@ -79,7 +81,7 @@ Note that the key called oauth_token refers to the access token."}
           (if-let [tkn (get @access-tokens (:access-token route-params))]
             (do (println tkn)
                 {:status 200
-                 :body (let [favs  (get-favs (-> req :route-params :access-token))
+                 :body (let [favs  (get-favs tkn)
                              nicks (map #(-> % :user :screen-name) favs)]
                          (pr-str (reduce #(update %1 %2 (fnil inc 0)) {} nicks)))})
             {:status 401}))
