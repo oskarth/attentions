@@ -7,7 +7,9 @@
             [goog.string :as gstring]
             [goog.Uri :as uri]
             [goog.net.XhrIo :as xhr]
-            [cljs.reader :as reader]))
+            [goog.i18n.DateTimeFormat.Format]
+            [cljs.reader :as reader])
+  (:import [goog.i18n DateTimeFormat]))
 
 (enable-console-print!)
 
@@ -239,10 +241,11 @@
             (alternate (map entity ents) (map gstring/unescapeEntities sepd))
             (alternate (map gstring/unescapeEntities sepd) (map entity ents))))))
 
+(def date-fmt (DateTimeFormat. goog.i18n.DateTimeFormat.Format/SHORT_TIME))
+
 (defn tweet [tweet]
   (let [rt-or-t  (or (:retweeted-status tweet) tweet)
         entities (:entities tweet)]
-    ;; (trace tweet)
     [:div.flex.flex-center.p2
      [:div.mr2.p0
       [:img.rounded {:src (-> rt-or-t :user :profile-image-url)
@@ -252,7 +255,9 @@
         [:span.h6.block.gray.absolute
          {:style {:top "-15px"}} "Retweeted by @"
          (-> tweet :user :screen-name)])
-      [tweet-text rt-or-t]]]))
+      [tweet-text rt-or-t]
+      (let [date (js/Date. (js/Date.parse (:created-at rt-or-t)))]
+        [:span.gray.h6.ml1 (.format date-fmt date)])]]))
 
 (defn heading []
   [:div
@@ -260,8 +265,9 @@
    [:span.h5.ml2.gray.regular "Made by "
     [:a {:href "https://twitter.com/oskarth"} "@oskarth"] " & "
     [:a {:href "https://twitter.com/martinklepsch"} "@martinklepsch"]]]
-   [:h3 "Beat information overflow."]
-  [:p "A modified Twitter timeline that filters out frequent posters and promotes people whose tweets you often like."]])
+   [:h3.h3 "Beat information overflow."]
+   [:p {:style {:line-height 1.6}}
+    "A modified Twitter timeline that filters out frequent posters and promotes people whose tweets you often like."]])
 
 (defn app []
   (let [acc-tkn   (rf/subscribe [:access-token])
@@ -272,7 +278,7 @@
     ;; (println "enriched first" (first @enriched))
     ;; (doseq [t @enriched] (println (::selected t)))
     (fn []
-      [:div.container.mt4.p2
+      [:div.container.mt2.p2
        [:div#timeline.lg-col-8.col-10.mx-auto
         [heading]
         (if @acc-tkn
