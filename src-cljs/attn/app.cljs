@@ -37,10 +37,24 @@
    (update db :tweets #(reduce conj % tweets))))
 
 (rf/register-handler
+ :favstats
+ rf/debug
+ (fn [db [_ tweets]]
+   (update db :favstats #(reduce conj % tweets))))
+
+(rf/register-handler
  :get-tweets
  (fn [db _]
    (edn-xhr (str "/feeds/" (:access-token db) ".edn")
             #(rf/dispatch [:tweets %]))
+   db))
+
+(rf/register-handler
+ :get-favstats
+ rf/debug
+ (fn [db _]
+   (edn-xhr (str "/favstats/" (:access-token db) ".edn")
+            #(rf/dispatch [:favstats %]))
    db))
 
 (rf/register-sub
@@ -53,22 +67,31 @@
  (fn [db [k]]
    (reaction (reverse (sort-by :id (get @db k))))))
 
+(rf/register-sub
+ :favstats
+ (fn [db [k]]
+   (reaction (get @db k))))
+
 (defn fortunate? [prob]
   (> (* prob 100) (rand-int 100)))
 
-;; TODO: add relevance into mix
-(defn select-tweets [tweets]
+(defn select-tweets [tweets favstats]
   (let [get-nick #(:screen-name (:user %))
+        nicks-tweets (zipmap (map get-nick tweets) tweets)
         nicks-freq (reduce
                     #(assoc %1 (get-nick %2) (inc (%1 (get-nick %2) 0)))
                     {}
                     tweets)
-        nicks-tweets (zipmap (map get-nick tweets) tweets)
+        favs (filter #(get nicks-freq (first %)) favstats)
+        nicks-favs (zipmap (map first favs) (map second favs))
         freq-prob (zipmap (keys nicks-freq)
-                          (map #(/ 1 (second %)) nicks-freq))]
-    (vals (filter #(fortunate? (get freq-prob (first %)))
+                          (map #(/ 1 (second %)) nicks-freq))
+        scores (merge-with * freq-prob nicks-favs)]
+    ;;(println "NICKS-FAVS " (sort-by key nicks-favs))
+    ;;(println "NICKS-FREQ " (sort-by key nicks-freq))
+    ;;(println "SCORES " (sort-by key scores))
+    (vals (filter #(fortunate? (get scores (first %)))
                   nicks-tweets))))
-
 
 (def entity-type-mapping
   {:urls ::url, :user-mentions ::mention,
@@ -139,14 +162,16 @@
 
 (defn app []
   (let [acc-tkn (rf/subscribe [:access-token])
-        tweets (rf/subscribe [:tweets])]
+        tweets (rf/subscribe [:tweets])
+        favstats (rf/subscribe [:favstats])]
       [:div.container.mt4
        [:div#timeline.col-10.mx-auto
         [:h1 "Attentions"]
         (if @acc-tkn
           [:div
-           [:p "Check out your " [:a {:on-click #(rf/dispatch [:get-tweets])} "feed"] "."]
-           (for [t (select-tweets @tweets)]
+           [:p "Check out your " [:a {:on-click #(do (rf/dispatch [:get-tweets])
+                                                      (rf/dispatch [:get-favstats]))} "feed"] "."]
+           (for [t (select-tweets @tweets @favstats)]
              ^{:key (:id t)}
              [tweet t])]
           [:div [:a.btn.bg-green.white.rounded {:href "/auth"} "Sign in with Twitter"]])]]))
@@ -154,7 +179,8 @@
 (defn get-startup-data []
   (let [qd (.getQueryData (uri/parse js/location))]
     {:access-token (.get qd "access-token")
-     :tweets       #{}}))
+     :tweets       #{}
+     :favstats     #{}}))
 
 (defn init []
   (rf/dispatch-sync [:startup (get-startup-data)])
