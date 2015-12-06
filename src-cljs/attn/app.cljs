@@ -33,14 +33,12 @@
 
 (rf/register-handler
  :tweets
- rf/debug
  (fn [db [_ tweets]]
    (trace (count tweets))
    (update db :tweets #(reduce conj % tweets))))
 
 (rf/register-handler
  :get-tweets
- rf/debug
  (fn [db _]
    (edn-xhr (str "/feeds/" (:access-token db) ".edn")
             #(rf/dispatch [:tweets %]))
