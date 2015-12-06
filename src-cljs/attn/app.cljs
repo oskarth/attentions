@@ -248,22 +248,27 @@
   (let [acc-tkn   (rf/subscribe [:access-token])
         enriched  (rf/subscribe [:tweets-enriched])
         show-hdn? (rf/subscribe [:show-hidden?])]
-    [:div.container.mt4
-     [:div#timeline.col-8.mx-auto
-      [heading]
-      (if @acc-tkn
-        [:div
-         [:p
-          [:a.btn.border.rounded.mr2 {:on-click #(do (rf/dispatch [:get-tweets])
-                                                     (rf/dispatch [:get-favstats]))}
-           "Refresh feed"]
-          [:a.btn.border.rounded {:on-click #(rf/dispatch [:toggle-hidden])}
-           (if @show-hdn? "Hide stuff" "Show hidden")]]
-         (doall
-          (for [t @enriched]
-            (if (or (::selected t) @show-hdn?)
-              ^{:key (:id t)} [:div {:class (if (::selected t) "" "fade")} [tweet t]])))]
-        [:div [:a.btn.bg-green.white.rounded {:href "/auth"} "Sign in with Twitter"]])]]))
+    ;; (println "enriched cnt" (count @enriched))
+    (println "enriched uniq ids cnt" (count (set (map :id @enriched))))
+    (println "enriched first" (first @enriched))
+    ;; (doseq [t @enriched] (println (::selected t)))
+    (fn []
+      [:div.container.mt4
+       [:div#timeline.col-8.mx-auto
+        [heading]
+        (if @acc-tkn
+          [:div
+           [:p
+            [:a.btn.border.rounded.mr2 {:on-click #(do (rf/dispatch [:get-tweets])
+                                                       (rf/dispatch [:get-favstats]))}
+             "Refresh feed"]
+            [:a.btn.border.rounded {:on-click #(rf/dispatch [:toggle-hidden])}
+             (if @show-hdn? "Hide stuff" "Show hidden")]]
+           (doall
+            (for [t @enriched]
+              (if (or (::selected t) @show-hdn?)
+                ^{:key (:id t)} [:div {:class (if (::selected t) "" "fade")} [tweet t]])))]
+          [:div [:a.btn.bg-green.white.rounded {:href "/auth"} "Sign in with Twitter"]])]])))
 
 (defn get-startup-data []
   (let [qd (.getQueryData (uri/parse js/location))]
