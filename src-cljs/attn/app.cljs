@@ -85,23 +85,33 @@
 (defn fortunate? [prob]
   (> (* prob 100) (rand-int 100)))
 
+;; TODO: Factor out / remove the general factors.
+(defn calculate-prob [freq fav [nfreq nfav]]
+  (let [;;compression-factor (/ 200 100) ;; 2
+        ;;default-prob (/ 1 compression-factor) ;; 0.5
+        ;;new-nfav (+ nfav 200) ;; account for fav count skew below
+        ;;fav-to-freq-factor (/ new-nfav nfreq) ;; 5x more favs than freq, i.e. discount that much
+
+        adjusted-fav (if fav (inc fav) 1)
+        fav-to-freq (/ adjusted-fav freq)
+        relevance (/ fav-to-freq (+ 0.5 fav-to-freq))]
+    (println "FREQ FAV REL" freq adjusted-fav relevance)
+    relevance))
+
 (defn select-tweets [tweets favstats]
   (let [get-nick #(:screen-name (:user %))
-        nicks-tweets (zipmap (map get-nick tweets) tweets)
+        nicks (map get-nick tweets)
         nicks-freq (reduce
                     #(assoc %1 (get-nick %2) (inc (%1 (get-nick %2) 0)))
                     {}
                     tweets)
-        favs (filter #(get nicks-freq (first %)) favstats)
-        nicks-favs (zipmap (map first favs) (map second favs))
-        freq-prob (zipmap (keys nicks-freq)
-                          (map #(/ 1 (second %)) nicks-freq))
-        scores (merge-with * freq-prob nicks-favs)]
-    ;;(println "NICKS-FAVS " (sort-by key nicks-favs))
-    ;;(println "NICKS-FREQ " (sort-by key nicks-freq))
-    ;;(println "SCORES " (sort-by key scores))
-    (vals (filter #(fortunate? (get scores (first %)))
-                  nicks-tweets))))
+        favs-present (filter #(get nicks-freq (first %)) favstats)
+        nicks-favs (zipmap (map first favs-present) (map second favs-present))
+        ;; XXX: Remove stats?
+        stats [(reduce + (vals nicks-favs))
+               (reduce + (vals nicks-freq))]
+        probs (zipmap nicks (map #(calculate-prob (get nicks-freq %) (get nicks-favs %) stats) nicks))]
+     (filter #(fortunate? (get probs (get-nick %))) tweets)))
 
 (def entity-type-mapping
   {:urls ::url, :user-mentions ::mention,
