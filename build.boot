@@ -32,6 +32,7 @@
   [p prod bool "Run in production mode"]
   (comp (serve :httpkit true
                :reload  true
+               :port    (if prod 8080 3000)
                :nrepl   {:port 3001}
                :handler 'attn.api/handler)
         (if prod identity (watch))
