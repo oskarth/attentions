@@ -55,9 +55,10 @@
 
 (rf/register-handler
  :tweets
+ rf/debug
  (fn [db [_ tweets]]
    (let [old (or (:tweets db) {})
-         new (reduce #(assoc-in %1 [:tweets (:id %2)] %2) old tweets)]
+         new (reduce #(assoc %1 (:id %2) %2) old tweets)]
      ;; (println "arg type" (type tweets))
      ;; (println "db type" (type old))
      (ls/set! :tweets (let [new-val (:tweets new)]
