@@ -36,10 +36,10 @@
  :startup
  rf/debug
  (fn [db [_ v]]
-   (let [tweets (ls/get :tweets)
-         at     (:access-token v)]
-     (when (and at (not (seq tweets))))
-       (rf/dispatch [:get-tweets])
+   (let [tweets (merge (ls/get :tweets) (:tweets db))
+         at     (or (:access-token v) (ls/get :access-token))]
+     (when (and at (empty? tweets))
+       (rf/dispatch [:get-tweets]))
      (when at (ls/set! :access-token at))
      (push-state! {} "Attentions" "/")
      (-> db
@@ -56,13 +56,14 @@
 (rf/register-handler
  :tweets
  (fn [db [_ tweets]]
-   (let [old (or (:tweets db) #{})]
+   (let [old (or (:tweets db) {})
+         new (reduce #(assoc-in %1 [:tweets (:id %2)] %2) old tweets)]
      (println "arg type" (type tweets))
      (println "db type" (type old))
-     (ls/set! :tweets (let [new-val (reduce conj old tweets)]
+     (ls/set! :tweets (let [new-val (:tweets new)]
                         (println (count new-val) "items in localstorage")
-                        (take 300 (sort-by :id new-val))))
-     (assoc db :tweets (reduce conj old tweets)))))
+                        (into {} (take 300 new-val))))
+     (assoc db :tweets new))))
 
 (rf/register-handler
  :favstats
@@ -73,6 +74,7 @@
 
 (rf/register-handler
  :get-tweets
+ rf/debug
  (fn [db _]
    (edn-xhr (str "/feeds/" (:access-token db) ".edn")
             #(rf/dispatch [:tweets %])
@@ -106,16 +108,22 @@
 (rf/register-sub
  :tweets
  (fn [db [k]]
-   (reaction (reverse (sort-by :id (get @db k))))))
+   (reaction (:tweets @db))))
 
 (rf/register-sub
  :tweets-enriched
  (fn [db [k]]
-   (let [tweets    (rf/subscribe [:tweets])
+   (let [tweets   (rf/subscribe [:tweets])
          selected? (rf/subscribe [:selected-tweets])]
-     (reaction
-      (-> (fn [t] (assoc t ::selected (@selected? t)))
-          (mapv @tweets))))))
+     (->> (vals @tweets)
+          (mapv (fn [t] (assoc t ::selected (@selected? (:id t)))))
+          (sort-by :id)
+          reverse
+          reaction))))
+     ;; (reaction
+     ;;  (reverse 
+     ;;   (sort-by :id (-> (fn [t] (assoc t ::selected (@selected? (:id t))))
+     ;;                    (mapv ))))))))
 
 (rf/register-sub
  :favstats
@@ -158,7 +166,7 @@
  (fn [db [k]]
    (let [tweets   (rf/subscribe [:tweets])
          favstats (rf/subscribe [:favstats])]
-     (reaction (set (select-tweets @tweets @favstats))))))
+     (reaction (set (map :id (select-tweets (vals @tweets) @favstats)))))))
 
 (def entity-type-mapping
   {:urls ::url, :user-mentions ::mention,
@@ -254,14 +262,12 @@
          (doall
           (for [t @enriched]
             (if (or (::selected t) @show-hdn?)
-              ^{:key (:id t)} [:div {:class (if (::selected t) "" "gray")} [tweet t]])))]
+              ^{:key (:id t)} [:div {:class (if (::selected t) "" "fade")} [tweet t]])))]
         [:div [:a.btn.bg-green.white.rounded {:href "/auth"} "Sign in with Twitter"]])]]))
 
 (defn get-startup-data []
   (let [qd (.getQueryData (uri/parse js/location))]
-    {:access-token (or (.get qd "access-token") (ls/get :access-token))
-     :tweets       #{}
-     :favstats     #{}}))
+    {:access-token (or (.get qd "access-token") (ls/get :access-token))}))
 
 (defn init []
   (rf/dispatch-sync [:startup (get-startup-data)])

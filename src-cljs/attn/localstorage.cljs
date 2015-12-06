@@ -22,7 +22,7 @@
   "Stores key value in local storage."
   [key val]
   (let [v (pr-str val)]
-    ;; (js/console.log "Setting " (str key) "to a val of size" (.-length v))
+    (js/console.log "Setting " (str key) "to a val of size" (.-length v))
     (.set (storage) (str key) v)))
 (def set! set!*)
 
