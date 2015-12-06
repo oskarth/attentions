@@ -184,13 +184,19 @@
          (-> tweet :user :screen-name)])
       [tweet-text rt-or-t]]]))
 
+(defn heading []
+  [:h1 "Attentions"
+   [:span.h5.ml2.gray.regular "Made by "
+    [:a {:href "https://twitter.com/oskarth"} "@oskarth"] " & "
+    [:a {:href "https://twitter.com/martinklepsch"} "@martinklepsch"]]])
+
 (defn app []
   (let [acc-tkn (rf/subscribe [:access-token])
         tweets (rf/subscribe [:tweets])
         favstats (rf/subscribe [:favstats])]
       [:div.container.mt4
        [:div#timeline.col-8.mx-auto
-        [:h1 "Attentions"]
+        [heading]
         (if @acc-tkn
           [:div
            [:p "Check out your " [:a {:on-click #(do (rf/dispatch [:get-tweets])
