@@ -239,10 +239,13 @@
       [tweet-text rt-or-t]]]))
 
 (defn heading []
-  [:h1 "Attentions"
+  [:div
+   [:h1 "Attentions"
    [:span.h5.ml2.gray.regular "Made by "
     [:a {:href "https://twitter.com/oskarth"} "@oskarth"] " & "
-    [:a {:href "https://twitter.com/martinklepsch"} "@martinklepsch"]]])
+    [:a {:href "https://twitter.com/martinklepsch"} "@martinklepsch"]]]
+   [:h3 "Beat information overflow."]
+  [:p "A modified Twitter timeline that filters out frequent posters and promotes people whose tweets you often like."]])
 
 (defn app []
   (let [acc-tkn   (rf/subscribe [:access-token])
