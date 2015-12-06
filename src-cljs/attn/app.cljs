@@ -148,7 +148,8 @@
 (defn relevance->prob [kw]
   (cond (= kw :ok)    0.25
         (= kw :good)  0.5
-        (= kw :great) 0.75))
+        (= kw :great) 0.75
+        :else         1))
 
 (defn calculate-prob [freq fav]
   (let [adjusted-fav (if fav (inc fav) 1)
